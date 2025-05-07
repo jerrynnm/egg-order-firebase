@@ -200,21 +200,23 @@ with tabs[1]:
         st.info("目前沒有未完成訂單。")
 
 # -------- 完成頁 --------
-with tabs[2]:
-    st.title("完成訂單")
-    finished_orders = fdb.fetch_orders(status="完成")
-    total = sum(o['金額'] for o in finished_orders) if finished_orders else 0
-    st.subheader(f"總營業額：${total}")
-    if finished_orders:
-        for order in finished_orders:
-            st.markdown(f"#### 訂單 {order['訂單編號']}（金額: ${order['金額']}）")
-            if isinstance(order['品項內容'], list):
-                for item in order['品項內容']:
-                    st.text(item)
-            else:
-                st.text(order['品項內容'])  # 舊格式保留
-            if order.get("備註"):
-                st.caption(f"備註：{order['備註']}")
-    else:
-        st.info("尚無完成訂單。")
+with col_send:
+    if st.button("送出"):
+        if st.session_state.temp_order:
+            order_id = str(int(time.time() * 1000))[-8:]
+            content_list = expand_order_items(st.session_state.temp_order)  # 🔁 展開清單
+            total_price = sum([o['price'] for o in st.session_state.temp_order])
+            combined_note = ' / '.join([o.get('note', '') for o in st.session_state.temp_order if o.get('note')])
+
+            fdb.append_order(
+                order_id=order_id,
+                content=content_list,
+                price=total_price,
+                status="未完成",
+                note=combined_note
+            )
+
+            st.session_state.temp_order.clear()
+            st.session_state.force_unfinished_refresh = True
+            st.rerun()
 
