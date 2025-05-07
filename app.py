@@ -149,6 +149,18 @@ with tabs[1]:
     st.title("未完成訂單")
 
     unfinished_orders = fdb.fetch_orders(status="未完成")
+
+# 將未完成訂單轉成文字 hash，判斷是否資料有變化
+    raw_data = json.dumps(unfinished_orders, sort_keys=True, ensure_ascii=False)
+    current_hash = hashlib.md5(raw_data.encode("utf-8")).hexdigest()
+
+    if "last_unfinished_hash" not in st.session_state:
+        st.session_state.last_unfinished_hash = None
+
+    if current_hash != st.session_state.last_unfinished_hash:
+        st.session_state.last_unfinished_hash = current_hash
+        st.experimental_rerun()  # 自動刷新畫面，只在資料變化時執行
+
     st.write("📦 DEBUG 抓到的未完成訂單資料：", unfinished_orders)
     raw_data = json.dumps(unfinished_orders, sort_keys=True, ensure_ascii=False)
     current_hash = hashlib.md5(raw_data.encode("utf-8")).hexdigest()
