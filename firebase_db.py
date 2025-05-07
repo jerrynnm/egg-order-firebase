@@ -38,15 +38,20 @@ def print_error_and_exit(e):
     sys.exit(1)
 
 # ✅ 寫入新訂單
-def append_order(order_id, content, price, status, note=""):
+import time  # ⬅️ 這行請加在最上面 if not already present
+
+def append_order(order_id, content, price, status, note):
     data = {
         "訂單編號": order_id,
         "品項內容": content,
         "金額": price,
-        "備註": note,
         "狀態": status,
+        "備註": note,
         "timestamp": time.time()
     }
+    print("[DEBUG] 寫入資料：", data)  # ✅ 在 console 顯示寫入內容
+    db.child("orders").child(order_id).set(data)
+
     try:
         db.child("orders").child(order_id).set(data)
     except Exception as e:
@@ -56,9 +61,12 @@ def append_order(order_id, content, price, status, note=""):
 def fetch_orders(status="未完成"):
     try:
         result = db.child("orders").order_by_child("狀態").equal_to(status).get()
-        return [o.val() for o in result.each()] if result.each() else []
+        data = [o.val() for o in result.each()] if result.each() else []
+        print(f"[DEBUG] Firebase 抓取「{status}」訂單，共 {len(data)} 筆")
+        return data
     except Exception as e:
-        print_error_and_exit(e)
+        print("[ERROR] fetch_orders 失敗：", e)
+        return []
 
 # ✅ 更新品項內容（部分完成用）
 def update_order_content(order_id, new_content):
