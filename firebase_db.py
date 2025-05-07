@@ -1,4 +1,4 @@
-import pyrebase4  # 建議使用 pyrebase4，如果 requirements.txt 允許
+import pyrebase  # 建議使用 pyrebase4，如果 requirements.txt 允許
 import json
 import streamlit as st
 import time
