@@ -150,7 +150,7 @@ with tabs[1]:
 
     unfinished_orders = fdb.fetch_orders(status="未完成")
 
-# 將未完成訂單轉成文字 hash，判斷是否資料有變化
+    # 判斷資料變化：若有變化才刷新
     raw_data = json.dumps(unfinished_orders, sort_keys=True, ensure_ascii=False)
     current_hash = hashlib.md5(raw_data.encode("utf-8")).hexdigest()
 
@@ -159,33 +159,23 @@ with tabs[1]:
 
     if current_hash != st.session_state.last_unfinished_hash:
         st.session_state.last_unfinished_hash = current_hash
-        st.rerun()
-  # 自動刷新畫面，只在資料變化時執行
+        st.rerun()  # ✅ 當資料有變化，自動刷新畫面
 
-    st.write("📦 DEBUG 抓到的未完成訂單資料：", unfinished_orders)
-    raw_data = json.dumps(unfinished_orders, sort_keys=True, ensure_ascii=False)
-    current_hash = hashlib.md5(raw_data.encode("utf-8")).hexdigest()
-
-    if "last_unfinished_hash" not in st.session_state:
-        st.session_state.last_unfinished_hash = None
-
-    if current_hash != st.session_state.last_unfinished_hash:
-        st.session_state.last_unfinished_hash = current_hash
-        st.rerun()
-
+    # 顯示訂單區塊
     if unfinished_orders:
         for order in unfinished_orders:
             st.subheader(f"訂單 {order['訂單編號']} - ${order['金額']}")
             st.text(order['品項內容'])
             if order.get("備註"):
                 st.caption(f"備註：{order['備註']}")
+
             col1, col2 = st.columns(2)
             with col1:
-                if st.button(f"✅ 完成訂單 {order['訂單編號']}", key=f"done_{order['訂單編號']}"):
+                if st.button("✅ 完成訂單", key=f"done_{order['訂單編號']}"):
                     fdb.mark_order_done(order['訂單編號'])
                     st.rerun()
             with col2:
-                if st.button(f"🗑️ 刪除訂單 {order['訂單編號']}", key=f"del_{order['訂單編號']}"):
+                if st.button("🗑️ 刪除訂單", key=f"del_{order['訂單編號']}"):
                     fdb.delete_order_by_id(order['訂單編號'])
                     st.rerun()
     else:
