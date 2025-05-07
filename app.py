@@ -159,7 +159,8 @@ with tabs[1]:
 
     if current_hash != st.session_state.last_unfinished_hash:
         st.session_state.last_unfinished_hash = current_hash
-        st.experimental_rerun()  # 自動刷新畫面，只在資料變化時執行
+        st.rerun()
+  # 自動刷新畫面，只在資料變化時執行
 
     st.write("📦 DEBUG 抓到的未完成訂單資料：", unfinished_orders)
     raw_data = json.dumps(unfinished_orders, sort_keys=True, ensure_ascii=False)
