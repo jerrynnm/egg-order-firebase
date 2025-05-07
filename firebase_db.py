@@ -13,7 +13,7 @@ with open("temp_credentials.json", "w") as f:
 config = {
     "apiKey": firebase_config.get("api_key", ""),
     "authDomain": f"{firebase_config['project_id']}.firebaseapp.com",
-    "databaseURL": f"https://{firebase_config['project_id']}.firebaseio.com",
+    "databaseURL": "https://egg-order-system-default-rtdb.asia-southeast1.firebasedatabase.app/",
     "storageBucket": f"{firebase_config['project_id']}.appspot.com",
     "serviceAccount": "temp_credentials.json"
 }
