@@ -119,19 +119,19 @@ with tabs[0]:
                 st.session_state.temp_order.pop()
 
         with col_send:
-        if st.button("送出"):
-            if st.session_state.temp_order:
-                order_id = str(int(time.time() * 1000))[-8:]
-                content_list = [o['text'] for o in st.session_state.temp_order]  # ✅ 改為清單
-                total_price = sum([o['price'] for o in st.session_state.temp_order])
-                combined_note = ' / '.join([o.get('note', '') for o in st.session_state.temp_order if o.get('note')])
+            if st.button("送出"):
+                if st.session_state.temp_order:
+                    order_id = str(int(time.time() * 1000))[-8:]
+                    content_list = [o['text'] for o in st.session_state.temp_order]  # ✅ 改為清單
+                    total_price = sum([o['price'] for o in st.session_state.temp_order])
+                    combined_note = ' / '.join([o.get('note', '') for o in st.session_state.temp_order if o.get('note')])
 
-                fdb.append_order(
-                    order_id=order_id,
-                    content=content_list,  # ✅ 清單格式儲存
-                    price=total_price,
-                    status="未完成",
-                    note=combined_note
+                    fdb.append_order(
+                        order_id=order_id,
+                        content=content_list,  # ✅ 清單格式儲存
+                        price=total_price,
+                        status="未完成",
+                        note=combined_note
                 )
 
                 st.session_state.temp_order.clear()
