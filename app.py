@@ -118,17 +118,17 @@ with tabs[0]:
             if st.session_state.temp_order:
                 st.session_state.temp_order.pop()
 
-    with col_send:
+        with col_send:
         if st.button("送出"):
             if st.session_state.temp_order:
                 order_id = str(int(time.time() * 1000))[-8:]
-                content_all = '\n'.join([o['text'] for o in st.session_state.temp_order])
+                content_list = [o['text'] for o in st.session_state.temp_order]  # ✅ 改為清單
                 total_price = sum([o['price'] for o in st.session_state.temp_order])
                 combined_note = ' / '.join([o.get('note', '') for o in st.session_state.temp_order if o.get('note')])
 
                 fdb.append_order(
                     order_id=order_id,
-                    content=content_all,
+                    content=content_list,  # ✅ 清單格式儲存
                     price=total_price,
                     status="未完成",
                     note=combined_note
@@ -153,30 +153,48 @@ with tabs[1]:
     # 判斷資料變化：若有變化才刷新
     raw_data = json.dumps(unfinished_orders, sort_keys=True, ensure_ascii=False)
     current_hash = hashlib.md5(raw_data.encode("utf-8")).hexdigest()
-
     if "last_unfinished_hash" not in st.session_state:
         st.session_state.last_unfinished_hash = None
-
     if current_hash != st.session_state.last_unfinished_hash:
         st.session_state.last_unfinished_hash = current_hash
-        st.rerun()  # ✅ 當資料有變化，自動刷新畫面
+        st.rerun()
 
-    # 顯示訂單區塊
     if unfinished_orders:
         for order in unfinished_orders:
-            st.subheader(f"訂單 {order['訂單編號']} - ${order['金額']}")
-            st.text(order['品項內容'])
-            if order.get("備註"):
-                st.caption(f"備註：{order['備註']}")
+            st.subheader(f"訂單 {order['訂單編號']}（金額: ${order['金額']}）")
 
+            item_list = order["品項內容"] if isinstance(order["品項內容"], list) else order["品項內容"].split("\n")
+
+            checked_indices = []
+            for i, item in enumerate(item_list):
+                if st.checkbox(f"🟠 {item}", key=f"{order['訂單編號']}_{i}"):
+                    checked_indices.append(i)
+
+            st.markdown("---")
             col1, col2 = st.columns(2)
+
             with col1:
-                if st.button("✅ 完成訂單", key=f"done_{order['訂單編號']}"):
-                    fdb.mark_order_done(order['訂單編號'])
+                if st.button("✅ 完成", key=f"done_{order['訂單編號']}"):
+                    if checked_indices:
+                        new_list = [item for i, item in enumerate(item_list) if i not in checked_indices]
+                        if new_list:
+                            fdb.update_order_content(order['訂單編號'], new_list)
+                        else:
+                            fdb.mark_order_done(order['訂單編號'])
+                    else:
+                        fdb.mark_order_done(order['訂單編號'])
                     st.rerun()
+
             with col2:
-                if st.button("🗑️ 刪除訂單", key=f"del_{order['訂單編號']}"):
-                    fdb.delete_order_by_id(order['訂單編號'])
+                if st.button("🗑️ 刪除", key=f"del_{order['訂單編號']}"):
+                    if checked_indices:
+                        new_list = [item for i, item in enumerate(item_list) if i not in checked_indices]
+                        if new_list:
+                            fdb.update_order_content(order['訂單編號'], new_list)
+                        else:
+                            fdb.delete_order_by_id(order['訂單編號'])
+                    else:
+                        fdb.delete_order_by_id(order['訂單編號'])
                     st.rerun()
     else:
         st.info("目前沒有未完成訂單。")
