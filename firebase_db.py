@@ -64,15 +64,17 @@ import hashlib
 
 def fetch_orders(status="未完成"):
     try:
-        result = db.child("orders").order_by_child("狀態").equal_to(status).get()
-        data = [o.val() for o in result.each()] if result.each() else []
+        all_data = db.child("orders").get().val()
+        if not all_data:
+            print("[DEBUG] Firebase 中沒有任何訂單")
+            return []
 
-        print(f"[DEBUG] 抓取『{status}』訂單，共 {len(data)} 筆")
-        print(json.dumps(data, indent=2, ensure_ascii=False))  # ✅ 印出結果
+        filtered = [v for v in all_data.values() if v.get("狀態") == status]
+        print(f"[DEBUG] 從 Firebase 抓到『{status}』訂單共 {len(filtered)} 筆")
+        return filtered
 
-        return data
     except Exception as e:
-        print("[ERROR] fetch_orders 發生錯誤：", e)
+        print("[ERROR] 讀取 Firebase 訂單失敗：", e)
         return []
 
 # ✅ 更新品項內容（部分完成用）
