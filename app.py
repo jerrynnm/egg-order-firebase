@@ -207,11 +207,14 @@ with tabs[2]:
     st.subheader(f"總營業額：${total}")
     if finished_orders:
         for order in finished_orders:
-            st.markdown(f"#### 訂單 {order['訂單編號']}")
-            st.text(order['品項內容'])
+            st.markdown(f"#### 訂單 {order['訂單編號']}（金額: ${order['金額']}）")
+            if isinstance(order['品項內容'], list):
+                for item in order['品項內容']:
+                    st.text(item)
+            else:
+                st.text(order['品項內容'])  # 舊格式保留
             if order.get("備註"):
                 st.caption(f"備註：{order['備註']}")
     else:
         st.info("尚無完成訂單。")
 
-    st.markdown('</div>', unsafe_allow_html=True)
