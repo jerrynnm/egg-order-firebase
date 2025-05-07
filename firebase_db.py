@@ -1,18 +1,25 @@
-# firebase_db.py
 import pyrebase
-import time
+import json
+import streamlit as st
 
-# ✅ 根據你提供的憑證內容整合完成
+# 把 secrets 中的 FIREBASE_CREDENTIALS 解析成字典
+firebase_config = json.loads(st.secrets["FIREBASE_CREDENTIALS"])
+
+# 🔧 寫入一個臨時 credentials 檔案（streamlit cloud 可以接受）
+with open("temp_credentials.json", "w") as f:
+    json.dump(firebase_config, f)
+
 config = {
-    "apiKey": "AIzaSyDZldA0JmQ0UvZK9sDbZZIquwlhUBpvJDk",
-    "authDomain": "egg-order-system.firebaseapp.com",
-    "databaseURL": "https://egg-order-system.firebaseio.com",
-    "storageBucket": "egg-order-system.appspot.com",
-    "serviceAccount": "credentials.json"
+    "apiKey": firebase_config.get("api_key", ""),
+    "authDomain": f"{firebase_config['project_id']}.firebaseapp.com",
+    "databaseURL": f"https://{firebase_config['project_id']}.firebaseio.com",
+    "storageBucket": f"{firebase_config['project_id']}.appspot.com",
+    "serviceAccount": "temp_credentials.json"
 }
 
 firebase = pyrebase.initialize_app(config)
 db = firebase.database()
+
 
 # ✅ 寫入新訂單（未完成）
 def append_order(order_id, content, price, status, note=""):
