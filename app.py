@@ -191,7 +191,7 @@ with tabs[1]:
             else:
                 fdb.delete_order_by_id(order['訂單編號'])
 
-                    st.rerun()
+            st.rerun()
             with col2:
                 if st.button("🗑️ 刪除", key=f"del_{order['訂單編號']}"):
                     if checked_indices:
