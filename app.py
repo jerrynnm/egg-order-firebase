@@ -171,15 +171,26 @@ with tabs[1]:
             st.markdown("---")
             col1, col2 = st.columns(2)
             with col1:
-                if st.button("✅ 完成", key=f"done_{order['訂單編號']}"):
-                    if checked_indices:
-                        new_list = [item for i, item in enumerate(item_list) if i not in checked_indices]
-                        if new_list:
-                            fdb.update_order_content(order['訂單編號'], new_list)
-                        else:
-                            fdb.mark_order_done(order['訂單編號'])
-                    else:
-                        fdb.mark_order_done(order['訂單編號'])
+               if checked_indices:
+                completed_items = [item_list[i] for i in checked_indices]
+                remaining_items = [item for i, item in enumerate(item_list) if i not in checked_indices]
+
+    # 將勾選的項目逐筆寫入「完成訂單」
+            for item in completed_items:
+                fdb.append_order(
+                order_id=str(int(time.time() * 1000))[-8:],  # 新編號
+                content=[item],  # ✅ 這裡要變成清單格式，才能完成後正確換行
+                price=MENU["內餡雞蛋糕"],  # 假設為固定價格，或你可以用函數 estimate_price(item)
+                status="完成",
+                note=order.get("備註", "")
+        )
+                time.sleep(0.01)  # 避免時間戳衝突
+
+            if remaining_items:
+                fdb.update_order_content(order['訂單編號'], remaining_items)
+            else:
+                fdb.delete_order_by_id(order['訂單編號'])
+
                     st.rerun()
             with col2:
                 if st.button("🗑️ 刪除", key=f"del_{order['訂單編號']}"):
