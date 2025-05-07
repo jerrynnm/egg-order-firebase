@@ -15,9 +15,9 @@ with open("temp_credentials.json", "w") as f:
 config = {
     "apiKey": firebase_config.get("api_key", ""),
     "authDomain": f"{firebase_config['project_id']}.firebaseapp.com",
-    "databaseURL": "https://egg-order-system-default-rtdb.asia-southeast1.firebasedatabase.app/",  # <- 直接填寫
+    "databaseURL": "https://egg-order-system-default-rtdb.asia-southeast1.firebasedatabase.app/",
     "storageBucket": f"{firebase_config['project_id']}.appspot.com",
-    "serviceAccount": "temp_credentials.json"
+    "serviceAccount": StringIO(json.dumps(firebase_config))
 }
 
 # 5. pyrebase 版本建議
