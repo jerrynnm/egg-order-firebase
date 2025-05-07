@@ -7,25 +7,17 @@ import json
 import hashlib
 from dateutil import parser
 
-# -------- CSS 美化 --------
+# -------- CSS --------
 st.markdown("""
     <style>
     .center {text-align: center !important;}
-    .stButton>button {
-        width: 100%;
-        margin-top: 10px;
-    }
-    .stTabs [role="tablist"] {
-        justify-content: center;
-    }
-    .stTabs [role="tab"] {
-        font-weight: bold;
-        font-size: 18px;
-    }
+    .stButton>button { width: 100%; margin-top: 10px; }
+    .stTabs [role="tablist"] { justify-content: center; }
+    .stTabs [role="tab"] { font-weight: bold; font-size: 18px; }
     </style>
 """, unsafe_allow_html=True)
 
-# -------- 資料與初始化 --------
+# -------- MENU 資料 --------
 MENU = {
     "特價綜合雞蛋糕": 70,
     "內餡雞蛋糕": 50,
@@ -33,6 +25,7 @@ MENU = {
 }
 FLAVORS = ["拉絲起司", "奧利奧 Oreo", "黑糖麻糬"]
 
+# -------- 初始化 --------
 if 'temp_order' not in st.session_state:
     st.session_state.temp_order = []
 
@@ -104,8 +97,7 @@ with tabs[0]:
 
                     for flavor in FLAVORS:
                         flavor_key = f"flavor_{flavor}"
-                        if flavor_key in st.session_state:
-                            del st.session_state[flavor_key]
+                        st.session_state.pop(flavor_key, None)
 
                     st.session_state.show_popup = True
                     st.rerun()
@@ -128,28 +120,17 @@ with tabs[0]:
                 total_price = sum([o['price'] for o in st.session_state.temp_order])
                 combined_note = ' / '.join([o.get('note', '') for o in st.session_state.temp_order if o.get('note')])
 
-                fdb.append_order(
-                    order_id=order_id,
-                    content=content_list,
-                    price=total_price,
-                    status="未完成",
-                    note=combined_note
-                )
-
+                fdb.append_order(order_id, content_list, total_price, "未完成", combined_note)
                 st.session_state.temp_order.clear()
                 st.session_state.force_unfinished_refresh = True
                 st.rerun()
-
-    if st.session_state.get("order_submitted"):
-        st.success("\u2705 已送出訂單！")
-        del st.session_state["order_submitted"]
 
     st.markdown('</div>', unsafe_allow_html=True)
 
 # -------- 未完成訂單頁 --------
 with tabs[1]:
     st.title("未完成訂單")
-    unfinished_orders = fdb.fetch_orders(status="未完成")
+    unfinished_orders = fdb.fetch_orders("未完成")
 
     raw_data = json.dumps(unfinished_orders, sort_keys=True, ensure_ascii=False)
     current_hash = hashlib.md5(raw_data.encode("utf-8")).hexdigest()
@@ -163,35 +144,27 @@ with tabs[1]:
         for order in unfinished_orders:
             st.subheader(f"訂單 {order['訂單編號']}（金額: ${order['金額']}）")
             item_list = order["品項內容"] if isinstance(order["品項內容"], list) else order["品項內容"].split("\n")
-            checked_indices = []
-            for i, item in enumerate(item_list):
-                if st.checkbox(f"\U0001F7E0 {item}", key=f"{order['訂單編號']}_{i}"):
-                    checked_indices.append(i)
+            checked_indices = [i for i, item in enumerate(item_list) if st.checkbox(f"\U0001F7E0 {item}", key=f"{order['訂單編號']}_{i}")]
 
             st.markdown("---")
             col1, col2 = st.columns(2)
+
             with col1:
-               if checked_indices:
-                completed_items = [item_list[i] for i in checked_indices]
-                remaining_items = [item for i, item in enumerate(item_list) if i not in checked_indices]
+                if st.button("✅ 完成", key=f"done_{order['訂單編號']}"):
+                    if checked_indices:
+                        completed_items = [item_list[i] for i in checked_indices]
+                        remaining_items = [item for i, item in enumerate(item_list) if i not in checked_indices]
+                        for item in completed_items:
+                            fdb.append_order(str(int(time.time() * 1000))[-8:], [item], MENU["內餡雞蛋糕"], "完成", order.get("備註", ""))
+                            time.sleep(0.01)
+                        if remaining_items:
+                            fdb.update_order_content(order['訂單編號'], remaining_items)
+                        else:
+                            fdb.delete_order_by_id(order['訂單編號'])
+                    else:
+                        fdb.mark_order_done(order['訂單編號'])
+                    st.rerun()
 
-    # 將勾選的項目逐筆寫入「完成訂單」
-            for item in completed_items:
-                fdb.append_order(
-                order_id=str(int(time.time() * 1000))[-8:],  # 新編號
-                content=[item],  # ✅ 這裡要變成清單格式，才能完成後正確換行
-                price=MENU["內餡雞蛋糕"],  # 假設為固定價格，或你可以用函數 estimate_price(item)
-                status="完成",
-                note=order.get("備註", "")
-        )
-                time.sleep(0.01)  # 避免時間戳衝突
-
-            if remaining_items:
-                fdb.update_order_content(order['訂單編號'], remaining_items)
-            else:
-                fdb.delete_order_by_id(order['訂單編號'])
-
-            st.rerun()
             with col2:
                 if st.button("🗑️ 刪除", key=f"del_{order['訂單編號']}"):
                     if checked_indices:
@@ -209,7 +182,7 @@ with tabs[1]:
 # -------- 完成訂單頁 --------
 with tabs[2]:
     st.title("完成訂單")
-    finished_orders = fdb.fetch_orders(status="完成")
+    finished_orders = fdb.fetch_orders("完成")
     total = sum(o['金額'] for o in finished_orders) if finished_orders else 0
     st.subheader(f"總營業額：${total}")
 
@@ -221,8 +194,10 @@ with tabs[2]:
                 for item in content:
                     st.text(item)
             else:
-                st.text(content)
+                for item in content.split("\n"):
+                    st.text(item)
             if order.get("備註"):
                 st.caption(f"備註：{order['備註']}")
     else:
         st.info("尚無完成訂單。")
+
