@@ -201,7 +201,7 @@ with tabs[1]:
 
 # -------- 完成頁 --------
 with col_send:
-    if st.button("送出"):
+    if st.button("送出", key="send_temp_order"):  # ✅ 加上唯一 key
         if st.session_state.temp_order:
             order_id = str(int(time.time() * 1000))[-8:]
             content_list = expand_order_items(st.session_state.temp_order)  # 🔁 展開清單
@@ -219,4 +219,3 @@ with col_send:
             st.session_state.temp_order.clear()
             st.session_state.force_unfinished_refresh = True
             st.rerun()
-
