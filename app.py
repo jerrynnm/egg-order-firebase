@@ -149,6 +149,7 @@ with tabs[1]:
     st.title("未完成訂單")
 
     unfinished_orders = fdb.fetch_orders(status="未完成")
+    st.write("📦 DEBUG 抓到的未完成訂單資料：", unfinished_orders)
     raw_data = json.dumps(unfinished_orders, sort_keys=True, ensure_ascii=False)
     current_hash = hashlib.md5(raw_data.encode("utf-8")).hexdigest()
 
