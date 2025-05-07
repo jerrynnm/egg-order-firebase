@@ -2,3 +2,5 @@ streamlit
 pyrebase4
 streamlit-autorefresh
 python-dateutil
+gcloud
+setuptools
