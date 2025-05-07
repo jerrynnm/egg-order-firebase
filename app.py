@@ -1,13 +1,11 @@
-# app.py
 import streamlit as st
 import time
 import datetime
 import re
 import firebase_db as fdb
 import json
-from streamlit_autorefresh import st_autorefresh
-from dateutil import parser
 import hashlib
+from dateutil import parser
 
 # -------- CSS 美化 --------
 st.markdown("""
@@ -67,29 +65,31 @@ with tabs[0]:
 
         else:
             flavor_counts = {}
-            current_values = {}
-            for flavor in FLAVORS:
-                current_values[flavor] = st.session_state.get(f"flavor_{flavor}", 0)
+            current_values = {flavor: st.session_state.get(f"flavor_{flavor}", 0) for flavor in FLAVORS}
+            total_selected = sum(current_values.values())
+            remaining_total = 3 - total_selected
 
-            total = sum(current_values.values())
             cols = st.columns(len(FLAVORS))
             for i, flavor in enumerate(FLAVORS):
-                remaining = 3 - (total - current_values[flavor])
+                current = current_values[flavor]
+                remaining_for_this = 3 - (total_selected - current)
+                adjusted_value = min(current, remaining_for_this)
+
                 flavor_counts[flavor] = cols[i].number_input(
-                    flavor,
+                    label=flavor,
                     min_value=0,
-                    max_value=remaining,
-                    value=current_values[flavor],
+                    max_value=remaining_for_this,
+                    value=adjusted_value,
                     step=1,
                     key=f"flavor_{flavor}"
                 )
 
-            total = sum(flavor_counts.values())
-            st.write(f"已選 {total} 顆 / 限制 3 顆")
+            total_after = sum(flavor_counts.values())
+            st.markdown(f"🟡 已選擇：**{total_after} 顆**（最多 3 顆）")
             note = st.text_input("輸入備註（可空白）", key="note")
 
             if st.button("確認新增"):
-                if total != 3:
+                if total_after != 3:
                     st.warning("必須選滿3顆！")
                 else:
                     flavor_txt = ', '.join([f"{k}x{v}" for k, v in flavor_counts.items() if v > 0])
@@ -138,117 +138,58 @@ with tabs[0]:
                 st.session_state.force_unfinished_refresh = True
                 st.rerun()
 
+    if st.session_state.get("order_submitted"):
+        st.success("✅ 已送出訂單！")
+        del st.session_state["order_submitted"]
+
     st.markdown('</div>', unsafe_allow_html=True)
 
 # -------- 未完成頁 --------
 with tabs[1]:
-    st.markdown('<div class="center">', unsafe_allow_html=True)
     st.title("未完成訂單")
 
-    st_autorefresh(interval=10000, key="refresh_unfinished_check", limit=None)
     unfinished_orders = fdb.fetch_orders(status="未完成")
-
     raw_data = json.dumps(unfinished_orders, sort_keys=True, ensure_ascii=False)
     current_hash = hashlib.md5(raw_data.encode("utf-8")).hexdigest()
 
     if "last_unfinished_hash" not in st.session_state:
         st.session_state.last_unfinished_hash = None
-    if "unfinished_viewed_once" not in st.session_state:
-        st.session_state.unfinished_viewed_once = False
-    if "force_unfinished_refresh" not in st.session_state:
-        st.session_state.force_unfinished_refresh = True
 
-    if (
-        not st.session_state.unfinished_viewed_once
-        or current_hash != st.session_state.last_unfinished_hash
-        or st.session_state.force_unfinished_refresh
-    ):
-        st.session_state.unfinished_viewed_once = True
+    if current_hash != st.session_state.last_unfinished_hash:
         st.session_state.last_unfinished_hash = current_hash
+        st.rerun()
 
-        if unfinished_orders:
-            for order in unfinished_orders:
-                st.subheader(f"訂單 {order['訂單編號']} (金額: ${order['金額']})")
-                items = order['品項內容'].split('\n')
-                selected_items = []
-
-                for i, item_text in enumerate(items):
-                    selected = st.checkbox(f"🔸 {item_text}", key=f"{order['訂單編號']}_check_{i}")
-                    if selected:
-                        selected_items.append(i)
-
-                if order.get('備註'):
-                    st.caption(f"備註：{order['備註']}")
-
-                col1, col2 = st.columns(2)
-
-                if col1.button("✅ 完成", key=f"finish_btn_{order['訂單編號']}"):
-                    if selected_items:
-                        for i in sorted(selected_items, reverse=True):
-                            fdb.append_order(
-                                order_id=order['訂單編號'] + f"_{i}",
-                                content=items[i],
-                                price=0,
-                                status="完成",
-                                note=order.get('備註', '')
-                            )
-                            items.pop(i)
-                        if items:
-                            fdb.update_order_content(order['訂單編號'], '\n'.join(items))
-                        else:
-                            fdb.delete_order_by_id(order['訂單編號'])
-                    else:
-                        fdb.append_order(
-                            order_id=order['訂單編號'],
-                            content=order['品項內容'],
-                            price=order['金額'],
-                            status="完成",
-                            note=order.get('備註', '')
-                        )
-                        fdb.delete_order_by_id(order['訂單編號'])
-
-                    st.session_state.force_unfinished_refresh = True
+    if unfinished_orders:
+        for order in unfinished_orders:
+            st.subheader(f"訂單 {order['訂單編號']} - ${order['金額']}")
+            st.text(order['品項內容'])
+            if order.get("備註"):
+                st.caption(f"備註：{order['備註']}")
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button(f"✅ 完成訂單 {order['訂單編號']}", key=f"done_{order['訂單編號']}"):
+                    fdb.mark_order_done(order['訂單編號'])
                     st.rerun()
-
-                if col2.button("🗑️ 刪除", key=f"delete_btn_{order['訂單編號']}"):
-                    if selected_items:
-                        for i in sorted(selected_items, reverse=True):
-                            items.pop(i)
-                        if items:
-                            fdb.update_order_content(order['訂單編號'], '\n'.join(items))
-                        else:
-                            fdb.delete_order_by_id(order['訂單編號'])
-                    else:
-                        fdb.delete_order_by_id(order['訂單編號'])
-
-                    st.session_state.force_unfinished_refresh = True
+            with col2:
+                if st.button(f"🗑️ 刪除訂單 {order['訂單編號']}", key=f"del_{order['訂單編號']}"):
+                    fdb.delete_order_by_id(order['訂單編號'])
                     st.rerun()
-        else:
-            st.info("目前沒有未完成訂單。")
-
-        if "force_unfinished_refresh" in st.session_state:
-            del st.session_state["force_unfinished_refresh"]
-
     else:
-        st.caption("⏳ 訂單內容無變更，暫不更新畫面")
-
-    st.markdown('</div>', unsafe_allow_html=True)
+        st.info("目前沒有未完成訂單。")
 
 # -------- 完成頁 --------
 with tabs[2]:
-    st.markdown('<div class="center">', unsafe_allow_html=True)
     st.title("完成訂單")
-
     finished_orders = fdb.fetch_orders(status="完成")
-    total = sum(int(o['金額']) for o in finished_orders)
-    count = len(finished_orders)
-    st.subheader(f"總營業額: ${total}")
-    st.subheader(f"總出單數: {count}")
-
-    for order in finished_orders:
-        st.subheader(f"訂單 {order['訂單編號']}")
-        st.write(order['品項內容'])
-        if order.get('備註'):
-            st.caption(f"備註：{order['備註']}")
+    total = sum(o['金額'] for o in finished_orders) if finished_orders else 0
+    st.subheader(f"總營業額：${total}")
+    if finished_orders:
+        for order in finished_orders:
+            st.markdown(f"#### 訂單 {order['訂單編號']}")
+            st.text(order['品項內容'])
+            if order.get("備註"):
+                st.caption(f"備註：{order['備註']}")
+    else:
+        st.info("尚無完成訂單。")
 
     st.markdown('</div>', unsafe_allow_html=True)
