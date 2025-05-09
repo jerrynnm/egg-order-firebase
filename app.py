@@ -8,30 +8,57 @@ import hashlib
 from dateutil import parser
 
 # -------- CSS --------
+import streamlit as st
+
+# ✅ 按鈕樣式 + tab 樣式整合
 st.markdown("""
     <style>
     .center {
         text-align: center !important;
     }
 
+    /* ✅ 按鈕響應式寬度：從 100px 到 200px，自動調整 */
     .stButton > button {
-        width: 100%;         /* 讓按鈕填滿欄位 */
+        width: clamp(100px, 40%, 200px);
+        font-size: 16px;
+        padding: 0.5em 1em;
+        white-space: nowrap;
         margin-top: 10px;
+        border-radius: 8px;
     }
 
+    /* ✅ tabs 樣式，置中且不換行 */
     .stTabs [role="tablist"] {
         justify-content: center;
-        flex-wrap: nowrap;   /* ✅ 禁止換行 */
-        overflow-x: auto;    /* ✅ 加這個讓內容多時可左右滑動 */
+        flex-wrap: nowrap;
+        overflow-x: auto;
         overflow-y: hidden;
+        gap: 10px;
+        max-height: 60px;
     }
 
     .stTabs [role="tab"] {
+        min-width: 100px;
+        width: 40%;
+        flex: 0 0 auto;
+        text-align: center;
         font-weight: bold;
         font-size: 18px;
     }
     </style>
 """, unsafe_allow_html=True)
+st.markdown("### 操作選項")
+
+# ✅ 左右排列的按鈕區塊
+col1, col2 = st.columns(2)
+
+with col1:
+    if st.button("刪除暫存", key="delete_btn"):
+        st.success("✅ 刪除成功")
+
+with col2:
+    if st.button("送出", key="send_btn"):
+        st.success("✅ 已送出訂單")
 
 
 # -------- MENU 資料 --------
