@@ -10,19 +10,45 @@ from dateutil import parser
 # -------- CSS --------
 st.markdown("""
     <style>
-    .center {text-align: center !important;}
-    .stButton>button { width: 100%; margin-top: 10px; }
-    .stTabs [role="tablist"] { justify-content: center; }
-    .stTabs [role="tab"] { font-weight: bold; font-size: 18px; }
+    .center {
+        text-align: center !important;
+    }
+
+    .stButton>button {
+        margin: 6px;
+        min-width: 100px;
+        max-width: 140px;
+        padding: 6px 12px;
+        font-size: 14px;
+    }
+
+    .stTabs [role="tablist"] {
+        justify-content: center;
+    }
+
+    .stTabs [role="tab"] {
+        font-weight: bold;
+        font-size: 18px;
+    }
+
+    /* ✅ 只針對「兩欄按鈕」的 st.columns() 強制橫向排列 */
+    div[data-testid="column"] > div {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        flex-wrap: nowrap !important;
+    }
+
+    /* ✅ 強化手機版維持左右（不自動換行） */
+    @media (max-width: 768px) {
+        div[data-testid="column"] > div {
+            flex-direction: row !important;
+            justify-content: space-between !important;
+            flex-wrap: nowrap !important;
+        }
+    }
     </style>
 """, unsafe_allow_html=True)
-# -------- MENU 資料 --------
-MENU = {
-    "特價綜合雞蛋糕": 70,
-    "內餡雞蛋糕": 50,
-    "原味雞蛋糕": 60
-}
-FLAVORS = ["拉絲起司", "奧利奧 Oreo", "黑糖麻糬"]
 
 # -------- 初始化 --------
 if 'temp_order' not in st.session_state:
