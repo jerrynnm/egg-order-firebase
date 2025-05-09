@@ -267,9 +267,22 @@ with tabs[1]:
         st.error(f"載入訂單時發生錯誤: {str(e)}")
 
 # -------- 完成訂單頁 --------
+from datetime import datetime, date
+
 with tabs[2]:
     st.title("完成訂單")
 
+    # ✅ 自動刪除非今天的完成訂單
+    all_finished = fdb.fetch_orders("完成")
+    today_str = date.today().isoformat()
+    for order in all_finished:
+        ts = order.get("timestamp")
+        if ts:
+            order_date = datetime.fromtimestamp(ts).date().isoformat()
+            if order_date != today_str:
+                fdb.delete_order_by_id(order['訂單編號'])
+
+    # ✅ 重新抓取已過濾後的資料
     finished_orders = fdb.fetch_orders("完成")
     finished_orders = sorted(finished_orders, key=lambda x: x.get("timestamp", 0))
 
