@@ -11,14 +11,30 @@ from dateutil import parser
 st.markdown("""
     <style>
     .center {text-align: center !important;}
-    .stButton>button {
-        width: 100%;         /* 讓按鈕填滿欄位 */
+
+    .stButton > button {
+        width: clamp(120px, 40%, 250px);
         margin-top: 10px;
+        padding: 0.5em 1em;
+        font-size: 16px;
+        border-radius: 8px;
     }
+
     .stTabs [role="tablist"] {
+        display: flex;
         justify-content: center;
+        overflow-x: auto;
+        overflow-y: hidden;
+        flex-wrap: nowrap;     /* ✅ 禁止自動換行，強制水平排列 */
+        gap: 10px;
+        max-height: 60px;      /* ✅ 限制最大高度 */
     }
+
     .stTabs [role="tab"] {
+        min-width: 100px;
+        width: 40%;
+        flex: 0 0 auto;
+        text-align: center;
         font-weight: bold;
         font-size: 18px;
     }
