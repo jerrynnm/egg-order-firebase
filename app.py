@@ -179,14 +179,16 @@ with tabs[1]:
 
                         # 累加完成項目到 Firebase
                         updated_items = completed_items + checked
-                        fdb.update_completed_items(order['訂單編號'], updated_items, completed_price)
+                        fdb.update_completed_items(order['訂單編號'], checked, completed_price)
 
                         # 移除已完成項目
                         new_remaining = [item for item in remaining_items if item not in checked]
                         if new_remaining:
                             fdb.update_order_content(order['訂單編號'], new_remaining)
+                            fdb.update_completed_items(order['訂單編號'], updated_items, 0)  # 同步 completed_items 欄位
                         else:
-                            fdb.delete_order_by_id(order['訂單編號'])
+                            fdb.update_completed_items(order['訂單編號'], updated_items, 0)
+                            fdb.mark_order_done(order['訂單編號'])
                     else:
                         fdb.mark_order_done(order['訂單編號'])
                     st.rerun()
@@ -197,6 +199,7 @@ with tabs[1]:
                     st.rerun()
     else:
         st.info("目前沒有未完成訂單。")
+
 
 # -------- 完成訂單頁 --------
 with tabs[2]:
@@ -213,14 +216,19 @@ with tabs[2]:
     if finished_orders:
         for order in finished_orders:
             st.markdown(f"#### 訂單 {order['訂單編號']}（金額: ${order['金額']}）")
-            content = order['品項內容']
+
+            # 顯示完整內容：先顯示已完成項目
+            content = order.get('品項內容', [])
             if isinstance(content, list):
                 for item in content:
-                    st.text(item)
+                    st.text(f"✅ {item}")
             else:
-                for item in content.split("\n"):
-                    st.text(item)
+                for item in str(content).split("\n"):
+                    st.text(f"✅ {item}")
+
             if order.get("備註"):
                 st.caption(f"備註：{order['備註']}")
+
+            st.markdown("---")
     else:
         st.info("尚無完成訂單。")
