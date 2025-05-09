@@ -10,44 +10,12 @@ from dateutil import parser
 # -------- CSS --------
 st.markdown("""
     <style>
-    .center {
-        text-align: center !important;
-    }
-
-    .stButton>button {
-        margin: 6px;
-        min-width: 120px;
-        max-width: 150px;
-        padding: 6px 12px;
-    }
-
-    .stTabs [role="tablist"] {
-        justify-content: center;
-    }
-
-    .stTabs [role="tab"] {
-        font-weight: bold;
-        font-size: 18px;
-    }
-
-    /* ✅ 特定欄位下的按鈕容器橫向排列（桌機 + 手機） */
-    .st-emotion-cache-1kyxreq {
-        flex-direction: row !important;
-        justify-content: space-evenly !important;
-        flex-wrap: nowrap !important;
-    }
-
-    @media (max-width: 768px) {
-        .st-emotion-cache-1kyxreq {
-            flex-direction: row !important;
-            justify-content: space-evenly !important;
-            flex-wrap: nowrap !important;
-        }
-    }
+    .center {text-align: center !important;}
+    .stButton>button { width: 100%; margin-top: 10px; }
+    .stTabs [role="tablist"] { justify-content: center; }
+    .stTabs [role="tab"] { font-weight: bold; font-size: 18px; }
     </style>
 """, unsafe_allow_html=True)
-
-
 # -------- MENU 資料 --------
 MENU = {
     "特價綜合雞蛋糕": 70,
