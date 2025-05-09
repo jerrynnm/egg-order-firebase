@@ -12,13 +12,12 @@ st.markdown("""
     <style>
     .center {text-align: center !important;}
 
-    /* ✅ 改這裡：將按鈕寬度從 10% 起跳，而非 100% */
-    .stButton>button {
-        width: 70%;
-        min-width: 100px;  /* 防止過小 */
+    .stButton > button {
+        width: clamp(120px, 40%, 250px);  /* ✨ 核心重點 */
         margin-top: 10px;
         padding: 0.5em 1em;
         font-size: 16px;
+        border-radius: 8px;
     }
 
     .stTabs [role="tablist"] {
