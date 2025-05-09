@@ -14,6 +14,29 @@ st.markdown("""
     .stButton>button { width: 100%; margin-top: 10px; }
     .stTabs [role="tablist"] { justify-content: center; }
     .stTabs [role="tab"] { font-weight: bold; font-size: 18px; }
+
+    /* 新增：讓按鈕橫向排列且響應式 */
+    .button-row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 16px;
+        margin-bottom: 1em;
+    }
+    .button-row > div {
+        flex: 1 1 120px;
+        min-width: 100px;
+        max-width: 200px;
+    }
+    @media (max-width: 600px) {
+        .button-row {
+            gap: 8px;
+        }
+        .button-row > div {
+            min-width: 80px;
+            max-width: 120px;
+        }
+    }
     </style>
 """, unsafe_allow_html=True)
 # -------- MENU 資料 --------
