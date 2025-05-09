@@ -8,7 +8,6 @@ import hashlib
 from dateutil import parser
 
 # -------- CSS --------
-你說：
 st.markdown("""
     <style>
     .center {text-align: center !important;}
