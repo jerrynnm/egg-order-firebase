@@ -13,7 +13,7 @@ st.markdown("""
     .center {text-align: center !important;}
 
     .stButton > button {
-        width: clamp(120px, 40%, 250px);  /* ✨ 核心重點 */
+        width: clamp(120px, 40%, 250px);  /* 按鈕會自適應畫面寬度 */
         margin-top: 10px;
         padding: 0.5em 1em;
         font-size: 16px;
@@ -22,14 +22,21 @@ st.markdown("""
 
     .stTabs [role="tablist"] {
         justify-content: center;
+        overflow-x: auto;
+        gap: 10px;
     }
 
     .stTabs [role="tab"] {
+        min-width: 100px;
+        width: 40%;              /* 你指定的寬度，手機會比較顯眼 */
+        flex: 0 0 auto;
+        text-align: center;
         font-weight: bold;
         font-size: 18px;
     }
     </style>
 """, unsafe_allow_html=True)
+
 
 # -------- MENU 資料 --------
 MENU = {
