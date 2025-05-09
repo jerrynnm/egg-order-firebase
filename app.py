@@ -54,8 +54,7 @@ with tabs[0]:
         fdb.append_order(order_id, content_list, total_price, "未完成", combined_note)
         st.session_state.temp_order.clear()
         st.session_state.show_popup = False
-        st.session_state.force_unfinished_refresh = True
-        st.rerun()
+        st.success("✅ 訂單已送出！")
 
     for item in MENU:
         if st.button(item, key=f"menu_button_{item}"):
@@ -162,6 +161,7 @@ with tabs[0]:
                 send_temp_order_directly()
 
     st.markdown('</div>', unsafe_allow_html=True)
+
 
 
 # -------- 未完成訂單頁 --------
