@@ -46,6 +46,17 @@ with tabs[0]:
     st.markdown('<div class="center">', unsafe_allow_html=True)
     st.title("選擇餐點")
 
+    def send_temp_order_directly():
+        order_id = str(int(time.time() * 1000))[-8:]
+        content_list = [o['text'] for o in st.session_state.temp_order]
+        total_price = sum(o['price'] for o in st.session_state.temp_order)
+        combined_note = ' / '.join([o.get('note', '') for o in st.session_state.temp_order if o.get('note')])
+        fdb.append_order(order_id, content_list, total_price, "未完成", combined_note)
+        st.session_state.temp_order.clear()
+        st.session_state.show_popup = False
+        st.session_state.force_unfinished_refresh = True
+        st.rerun()
+
     for item in MENU:
         if st.button(item, key=f"menu_button_{item}"):
             st.session_state.selected_item = item
@@ -58,12 +69,24 @@ with tabs[0]:
         if item == "原味雞蛋糕":
             qty = st.number_input("份數", min_value=1, max_value=20, value=1, step=1, key="qty")
             note = st.text_input("輸入備註（可空白）", key="note_plain")
-            if st.button("確認新增", key="confirm_plain"):
-                txt = f"{item} x{qty}"
-                if note:
-                    txt += f" - 備註: {note}"
-                st.session_state.temp_order.append({"text": txt, "price": MENU[item] * qty, "note": note})
-                st.session_state.show_popup = False
+
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("確認新增", key="confirm_plain"):
+                    txt = f"{item} x{qty}"
+                    if note:
+                        txt += f" - 備註: {note}"
+                    st.session_state.temp_order.append({"text": txt, "price": MENU[item] * qty, "note": note})
+                    st.session_state.show_popup = False
+
+            with col2:
+                if st.button("直接送出", key="send_plain"):
+                    txt = f"{item} x{qty}"
+                    if note:
+                        txt += f" - 備註: {note}"
+                    st.session_state.temp_order.append({"text": txt, "price": MENU[item] * qty, "note": note})
+                    send_temp_order_directly()
+
         else:
             flavor_counts = {}
             current_values = {flavor: st.session_state.get(f"flavor_{flavor}", 0) for flavor in FLAVORS}
@@ -89,24 +112,39 @@ with tabs[0]:
             st.markdown(f"\U0001F7A1 已選擇：**{total_after} 顆**（最多 3 顆）")
             note = st.text_input("輸入備註（可空白）", key="note_filled")
 
-            if st.button("確認新增", key="confirm_filled"):
-                if total_after != 3:
-                    st.warning("必須選滿3顆！")
-                else:
-                    flavor_txt = ', '.join([f"{k}x{v}" for k, v in flavor_counts.items() if v > 0])
-                    if item == '特價綜合雞蛋糕':
-                        flavor_txt += ', 原味x3'
-                    txt = f"{item} {flavor_txt}"
-                    if note:
-                        txt += f" - 備註: {note}"
-                    st.session_state.temp_order.append({"text": txt, "price": MENU[item], "note": note})
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("確認新增", key="confirm_filled"):
+                    if total_after != 3:
+                        st.warning("必須選滿3顆！")
+                    else:
+                        flavor_txt = ', '.join([f"{k}x{v}" for k, v in flavor_counts.items() if v > 0])
+                        if item == '特價綜合雞蛋糕':
+                            flavor_txt += ', 原味x3'
+                        txt = f"{item} {flavor_txt}"
+                        if note:
+                            txt += f" - 備註: {note}"
+                        st.session_state.temp_order.append({"text": txt, "price": MENU[item], "note": note})
 
-                    for flavor in FLAVORS:
-                        flavor_key = f"flavor_{flavor}"
-                        st.session_state.pop(flavor_key, None)
+                        for flavor in FLAVORS:
+                            st.session_state.pop(f"flavor_{flavor}", None)
 
-                    st.session_state.show_popup = True
-                    st.rerun()
+                        st.session_state.show_popup = True
+                        st.rerun()
+
+            with col2:
+                if st.button("直接送出", key="send_filled"):
+                    if total_after != 3:
+                        st.warning("必須選滿3顆！")
+                    else:
+                        flavor_txt = ', '.join([f"{k}x{v}" for k, v in flavor_counts.items() if v > 0])
+                        if item == '特價綜合雞蛋糕':
+                            flavor_txt += ', 原味x3'
+                        txt = f"{item} {flavor_txt}"
+                        if note:
+                            txt += f" - 備註: {note}"
+                        st.session_state.temp_order.append({"text": txt, "price": MENU[item], "note": note})
+                        send_temp_order_directly()
 
     st.subheader("暫存訂單顯示區")
     for i, o in enumerate(st.session_state.temp_order):
@@ -121,17 +159,10 @@ with tabs[0]:
     with col_send:
         if st.button("送出", key="send_temp_order"):
             if st.session_state.temp_order:
-                order_id = str(int(time.time() * 1000))[-8:]
-                content_list = expand_order_items(st.session_state.temp_order)
-                total_price = sum([o['price'] for o in st.session_state.temp_order])
-                combined_note = ' / '.join([o.get('note', '') for o in st.session_state.temp_order if o.get('note')])
-
-                fdb.append_order(order_id, content_list, total_price, "未完成", combined_note)
-                st.session_state.temp_order.clear()
-                st.session_state.force_unfinished_refresh = True
-                st.rerun()
+                send_temp_order_directly()
 
     st.markdown('</div>', unsafe_allow_html=True)
+
 
 # -------- 未完成訂單頁 --------
 with tabs[1]:
