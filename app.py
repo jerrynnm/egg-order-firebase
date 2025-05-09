@@ -18,7 +18,11 @@ st.markdown("""
     .center {text-align: center !important;}
 
     .stButton>button {
-        width: 100%;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        font-size: 24px;
+        padding: 0;
         margin-top: 10px;
     }
 
@@ -39,27 +43,6 @@ st.markdown("""
         flex: 0 0 auto;
         text-align: center;
     }
-
-    .round-button {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        background-color: #FF6961;
-        color: white;
-        font-size: 24px;
-        border: none;
-        cursor: pointer;
-        display: inline-block;
-    }
-    .send-button {
-        background-color: #4CAF50;
-    }
-    .button-row {
-        display: flex;
-        justify-content: center;
-        gap: 20px;
-        margin-top: 10px;
-    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -77,25 +60,6 @@ if 'temp_order' not in st.session_state:
 
 # -------- 分頁 --------
 tabs = st.tabs(["暫存", "未完成", "完成"])
-
-# -------- 處理 query 參數動作 --------
-action = st.query_params.get("action")
-if action == "delete":
-    if st.session_state.temp_order:
-        st.session_state.temp_order.pop()
-        st.success("✅ 已刪除最後一筆暫存")
-    st.query_params.clear()
-
-elif action == "send":
-    if st.session_state.temp_order:
-        order_id = str(int(time.time() * 1000))[-8:]
-        content_list = [o['text'] for o in st.session_state.temp_order]
-        total_price = sum(o['price'] for o in st.session_state.temp_order)
-        combined_note = ' / '.join([o.get('note', '') for o in st.session_state.temp_order if o.get('note')])
-        fdb.append_order(order_id, content_list, total_price, "未完成", combined_note)
-        st.session_state.temp_order.clear()
-        st.success("✅ 訂單已送出！")
-    st.query_params.clear()
 
 # -------- 暫存頁 --------
 with tabs[0]:
@@ -209,19 +173,19 @@ with tabs[0]:
     for i, o in enumerate(st.session_state.temp_order):
         st.write(f"{i+1}. {o['text']} (${o['price']})")
 
-    st.markdown("""
-    <div class="button-row">
-        <form action="/?action=delete" method="get">
-            <button class="round-button" type="submit" title="刪除暫存">🗑️</button>
-        </form>
-        <form action="/?action=send" method="get">
-            <button class="round-button send-button" type="submit" title="送出訂單">📤</button>
-        </form>
-    </div>
-    """, unsafe_allow_html=True)
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🗑️", key="btn_delete"):
+            if st.session_state.temp_order:
+                st.session_state.temp_order.pop()
+                st.success("✅ 已刪除最後一筆暫存")
+
+    with col2:
+        if st.button("📤", key="btn_send"):
+            if st.session_state.temp_order:
+                send_temp_order_directly()
 
     st.markdown('</div>', unsafe_allow_html=True)
-
 
 # -------- 未完成訂單頁 --------
 with tabs[1]:
