@@ -8,22 +8,45 @@ import hashlib
 from dateutil import parser
 
 # -------- CSS --------
-st.subheader("暫存訂單顯示區")
-for i, o in enumerate(st.session_state.temp_order):
-    st.write(f"{i+1}. {o['text']} (${o['price']})")
+st.markdown("""
+    <style>
+    .center {
+        text-align: center !important;
+    }
 
-# ✅ 將送出與刪除的位置交換（送出在左、刪除在右）
-col_send, col_del = st.columns([1, 1])
+    .stButton>button {
+        margin: 6px;
+        min-width: 120px;
+        max-width: 150px;
+        padding: 6px 12px;
+    }
 
-with col_send:
-    if st.button("送出", key="send_temp_order"):
-        if st.session_state.temp_order:
-            send_temp_order_directly()
+    .stTabs [role="tablist"] {
+        justify-content: center;
+    }
 
-with col_del:
-    if st.button("刪除暫存", key="delete_temp"):
-        if st.session_state.temp_order:
-            st.session_state.temp_order.pop()
+    .stTabs [role="tab"] {
+        font-weight: bold;
+        font-size: 18px;
+    }
+
+    /* ✅ 特定欄位下的按鈕容器橫向排列（桌機 + 手機） */
+    .st-emotion-cache-1kyxreq {
+        flex-direction: row !important;
+        justify-content: space-evenly !important;
+        flex-wrap: nowrap !important;
+    }
+
+    @media (max-width: 768px) {
+        .st-emotion-cache-1kyxreq {
+            flex-direction: row !important;
+            justify-content: space-evenly !important;
+            flex-wrap: nowrap !important;
+        }
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 
 # -------- MENU 資料 --------
 MENU = {
