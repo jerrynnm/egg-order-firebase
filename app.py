@@ -9,21 +9,38 @@ from dateutil import parser
 
 # -------- CSS --------
 st.markdown("""
-    <style>
-    .center {text-align: center !important;}
-    .stButton>button {
-        width: 100%;         /* 讓按鈕填滿欄位 */
-        margin-top: 10px;
+<style>
+/* 1️⃣ 電腦版維持寬度 100%，上下排列（原樣） */
+.stButton > button {
+    width: 100%;
+    margin-top: 10px;
+}
+
+/* 2️⃣ 手機版：讓 Menu 區塊內的按鈕左右排列 + 寬度 50% */
+@media screen and (max-width: 600px) {
+    .menu-button-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: space-between;
     }
-    .stTabs [role="tablist"] {
-        justify-content: center;
+    .menu-button-row .stButton {
+        flex: 0 0 48%;  /* 寬度約 50%，留點間距 */
     }
-    .stTabs [role="tab"] {
-        font-weight: bold;
-        font-size: 18px;
-    }
-    </style>
+}
+
+/* 其他樣式維持 */
+.center {text-align: center !important;}
+.stTabs [role="tablist"] {
+    justify-content: center;
+}
+.stTabs [role="tab"] {
+    font-weight: bold;
+    font-size: 18px;
+}
+</style>
 """, unsafe_allow_html=True)
+
 
 # -------- MENU 資料 --------
 MENU = {
