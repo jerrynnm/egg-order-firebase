@@ -11,32 +11,19 @@ from dateutil import parser
 st.markdown("""
     <style>
     .center {text-align: center !important;}
-
-    .stButton > button {
-        width: clamp(120px, 40%, 250px);  /* 按鈕會自適應畫面寬度 */
+    .stButton>button {
+        width: 100%;         /* 讓按鈕填滿欄位 */
         margin-top: 10px;
-        padding: 0.5em 1em;
-        font-size: 16px;
-        border-radius: 8px;
     }
-
     .stTabs [role="tablist"] {
         justify-content: center;
-        overflow-x: auto;
-        gap: 10px;
     }
-
     .stTabs [role="tab"] {
-        min-width: 100px;
-        width: 40%;              /* 你指定的寬度，手機會比較顯眼 */
-        flex: 0 0 auto;
-        text-align: center;
         font-weight: bold;
         font-size: 18px;
     }
     </style>
 """, unsafe_allow_html=True)
-
 
 # -------- MENU 資料 --------
 MENU = {
