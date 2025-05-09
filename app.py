@@ -136,17 +136,16 @@ with tabs[0]:
 # -------- 未完成訂單頁 --------
 with tabs[1]:
     st.title("未完成訂單")
-    
+
     try:
         unfinished_orders = fdb.fetch_orders("未完成")
-        
-        # 使用 session state 來追踪訂單狀態變化
+
         raw_data = json.dumps(unfinished_orders, sort_keys=True, ensure_ascii=False)
         current_hash = hashlib.md5(raw_data.encode("utf-8")).hexdigest()
-        
+
         if "last_unfinished_hash" not in st.session_state:
             st.session_state.last_unfinished_hash = None
-            
+
         if current_hash != st.session_state.last_unfinished_hash:
             st.session_state.last_unfinished_hash = current_hash
             st.rerun()
@@ -154,19 +153,16 @@ with tabs[1]:
         if unfinished_orders:
             for order in unfinished_orders:
                 try:
-                    # 確保訂單有必要的欄位
                     if not all(key in order for key in ['訂單編號', '金額', '品項內容']):
                         st.error(f"訂單資料不完整: {order['訂單編號']}")
                         continue
-                        
+
                     st.subheader(f"訂單 {order['訂單編號']}（金額: ${order['金額']}）")
-                    
-                    # 處理品項內容
+
                     item_list = order["品項內容"] if isinstance(order["品項內容"], list) else order["品項內容"].split("\n")
                     completed_items = order.get("completed_items", [])
                     remaining_items = [item for item in item_list if item not in completed_items]
 
-                    # 使用 session state 來追踪已勾選的項目
                     checkbox_key = f"checked_{order['訂單編號']}"
                     if checkbox_key not in st.session_state:
                         st.session_state[checkbox_key] = []
@@ -188,7 +184,7 @@ with tabs[1]:
                                         for k in MENU:
                                             if text.startswith(k):
                                                 if k == "原味雞蛋糕":
-                                                    match = re.search(r"x(\d+)", text)
+                                                    match = re.search(r"x(\\d+)", text)
                                                     qty = int(match.group(1)) if match else 1
                                                     return MENU[k] * qty
                                                 return MENU[k]
@@ -196,26 +192,19 @@ with tabs[1]:
 
                                     completed_price = sum(estimate_price(i) for i in checked)
 
-                                    # 更新 completed_items
-                                    updated_items = completed_items + checked
-                                    fdb.update_completed_items(order['訂單編號'], updated_items)
+                                    fdb.update_completed_items(order['訂單編號'], checked, completed_price)
 
-                                    # 更新訂單內容和金額
-                                    old_content = order["品項內容"] if isinstance(order["品項內容"], list) else [order["品項內容"]]
-                                    new_content = old_content + checked
-                                    new_amount = order.get("金額", 0) + completed_price
-                                    fdb.update_order_content(order['訂單編號'], new_content, new_amount)
-
-                                    # 檢查是否所有品項都完成
                                     new_remaining = [item for item in remaining_items if item not in checked]
-                                    if not new_remaining:
+                                    if new_remaining:
+                                        fdb.update_order_content(order['訂單編號'], new_remaining, order['金額'])
+                                    else:
                                         fdb.mark_order_done(order['訂單編號'])
                                 else:
                                     fdb.mark_order_done(order['訂單編號'])
-                                    
+
                                 st.success("訂單更新成功！")
                                 st.rerun()
-                                
+
                             except Exception as e:
                                 st.error(f"更新訂單時發生錯誤: {str(e)}")
 
@@ -227,16 +216,17 @@ with tabs[1]:
                                 st.rerun()
                             except Exception as e:
                                 st.error(f"刪除訂單時發生錯誤: {str(e)}")
-                                
+
                 except Exception as e:
                     st.error(f"處理訂單 {order.get('訂單編號', '未知')} 時發生錯誤: {str(e)}")
                     continue
-                    
+
         else:
             st.info("目前沒有未完成訂單。")
-            
+
     except Exception as e:
         st.error(f"載入訂單時發生錯誤: {str(e)}")
+
 # -------- 完成訂單頁 --------
 with tabs[2]:
     st.title("完成訂單")
