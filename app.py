@@ -184,7 +184,7 @@ with tabs[1]:
                         # 移除已完成項目
                         new_remaining = [item for item in remaining_items if item not in checked]
                         if new_remaining:
-                            fdb.update_order_content(order['訂單編號'], new_remaining)
+                            fdb.update_completed_items(order['訂單編號'], new_remaining, new_amount)
                             fdb.update_completed_items(order['訂單編號'], updated_items, 0)  # 同步 completed_items 欄位
                         else:
                             fdb.update_completed_items(order['訂單編號'], updated_items, 0)
