@@ -12,8 +12,8 @@ st.markdown("""
     <style>
     .center {text-align: center !important;}
     .stButton>button {
-        width: 100%;         /* 讓按鈕填滿欄位 */
         margin-top: 10px;
+        width: 100%; /* 預設按鈕寬度 100% */
     }
     .stTabs [role="tablist"] {
         justify-content: center;
@@ -21,6 +21,47 @@ st.markdown("""
     .stTabs [role="tab"] {
         font-weight: bold;
         font-size: 18px;
+    }
+
+    /* 在寬度大於 600px 的螢幕上，調整彈出視窗和主畫面的按鈕並排 */
+    @media (min-width: 601px) {
+        /* 彈出視窗的按鈕 */
+        .st-emotion-cache-10pwrl8 > div > div > div:nth-child(2) > div:first-child .stButton>button { /* 針對彈出視窗的 "確認新增" */
+            width: calc(50% - 5px);
+            float: left;
+        }
+        .st-emotion-cache-10pwrl8 > div > div > div:nth-child(2) > div:last-child .stButton>button { /* 針對彈出視窗的 "直接送出" */
+            width: calc(50% - 5px);
+            float: right;
+        }
+        .st-emotion-cache-10pwrl8 > div > div > div:nth-child(2)::after { /* 清除彈出視窗按鈕的浮動 */
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        /* 主畫面的 "刪除暫存" 和 "送出" 按鈕 */
+        .st-emotion-cache-10pwrl8 > div > div > div:last-child > div:first-child .stButton>button { /* 針對 "刪除暫存" */
+            width: calc(50% - 5px);
+            float: left;
+        }
+        .st-emotion-cache-10pwrl8 > div > div > div:last-child > div:last-child .stButton>button { /* 針對 "送出" */
+            width: calc(50% - 5px);
+            float: right;
+        }
+        .st-emotion-cache-10pwrl8 > div > div > div:last-child::after { /* 清除主畫面按鈕的浮動 */
+            content: "";
+            display: table;
+            clear: both;
+        }
+    }
+
+    /* 在寬度小於等於 600px 的螢幕上，按鈕恢復佔滿欄位 */
+    @media (max-width: 600px) {
+        .stButton>button {
+            width: 100%;
+            float: none; /* 移除浮動 */
+        }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -196,98 +237,79 @@ with tabs[1]:
                         st.error(f"訂單資料不完整: {order['訂單編號']}")
                         continue
 
-                    st.subheader(f"訂單 {order['訂單編號']}（金額: ${order['金額']}）")
-
-                    item_list = order["品項內容"] if isinstance(order["品項內容"], list) else order["品項內容"].split("\n")
-                    completed_items = order.get("completed_items", [])
-                    remaining_items = [item for item in item_list if item not in completed_items]
-
-                    checkbox_key = f"checked_{order['訂單編號']}"
-                    if checkbox_key not in st.session_state:
-                        st.session_state[checkbox_key] = []
-
-                    checked = []
-                    for i, item in enumerate(remaining_items):
-                        checkbox_key = f"{order['訂單編號']}_{i}"
-                        if st.checkbox(f"\U0001F7E0 {item}", key=checkbox_key):
-                            checked.append(item)
-
-                    st.markdown("---")
-                    col1, col2 = st.columns(2)
-
-                    with col1:
-                        if st.button("✅ 完成", key=f"done_{order['訂單編號']}"):
-                            try:
-                                if checked:
-                                    def estimate_price(text):
-                                        for k in MENU:
-                                            if text.startswith(k):
-                                                if k == "原味雞蛋糕":
-                                                    match = re.search(r"x(\\d+)", text)
-                                                    qty = int(match.group(1)) if match else 1
-                                                    return MENU[k] * qty
-                                                return MENU[k]
-                                        return 50
-
-                                    completed_price = sum(estimate_price(i) for i in checked)
-
-                                    fdb.update_completed_items(order['訂單編號'], checked, completed_price)
-
-                                    new_remaining = [item for item in remaining_items if item not in checked]
-                                    if new_remaining:
-                                        fdb.update_order_content(order['訂單編號'], new_remaining, order['金額'])
-                                    else:
-                                        fdb.mark_order_done(order['訂單編號'])
-                                else:
-                                    fdb.mark_order_done(order['訂單編號'])
-
-                                st.success("訂單更新成功！")
-                                st.rerun()
-
-                            except Exception as e:
-                                st.error(f"更新訂單時發生錯誤: {str(e)}")
-
-                    with col2:
-                        if st.button("🗑️ 刪除", key=f"del_{order['訂單編號']}"):
-                            try:
-                                fdb.delete_order_by_id(order['訂單編號'])
-                                st.success("訂單已刪除！")
-                                st.rerun()
-                            except Exception as e:
-                                st.error(f"刪除訂單時發生錯誤: {str(e)}")
-
-                except Exception as e:
-                    st.error(f"處理訂單 {order.get('訂單編號', '未知')} 時發生錯誤: {str(e)}")
-                    continue
-
-        else:
-            st.info("目前沒有未完成訂單。")
-
-    except Exception as e:
-        st.error(f"載入訂單時發生錯誤: {str(e)}")
-
-# -------- 完成訂單頁 --------
+                    st.subheader(f"訂單 {order['訂單編號']}（金額: <span class="math-inline">\{order\['金額'\]\}）"\)
+item\_list \= order\["品項內容"\] if isinstance\(order\["品項內容"\], list\) else order\["品項內容"\]\.split\("\\n"\)
+completed\_items \= order\.get\("completed\_items", \[\]\)
+remaining\_items \= \[item for item in item\_list if item not in completed\_items\]
+checkbox\_key \= f"checked\_\{order\['訂單編號'\]\}"
+if checkbox\_key not in st\.session\_state\:
+st\.session\_state\[checkbox\_key\] \= \[\]
+checked \= \[\]
+for i, item in enumerate\(remaining\_items\)\:
+checkbox\_key \= f"\{order\['訂單編號'\]\}\_\{i\}"
+if st\.checkbox\(f"\\U0001F7E0 \{item\}", key\=checkbox\_key\)\:
+checked\.append\(item\)
+st\.markdown\("\-\-\-"\)
+col1, col2 \= st\.columns\(2\)
+with col1\:
+if st\.button\("✅ 完成", key\=f"done\_\{order\['訂單編號'\]\}"\)\:
+try\:
+if checked\:
+def estimate\_price\(text\)\:
+for k in MENU\:
+if text\.startswith\(k\)\:
+if k \=\= "原味雞蛋糕"\:
+match \= re\.search\(r"x\(\\\\d\+\)", text\)
+qty \= int\(match\.group\(1\)\) if match else 1
+return MENU\[k\] \* qty
+return MENU\[k\]
+return 50
+completed\_price \= sum\(estimate\_price\(i\) for i in checked\)
+fdb\.update\_completed\_items\(order\['訂單編號'\], checked, completed\_price\)
+new\_remaining \= \[item for item in remaining\_items if item not in checked\]
+if new\_remaining\:
+fdb\.update\_order\_content\(order\['訂單編號'\], new\_remaining, order\['金額'\]\)
+else\:
+fdb\.mark\_order\_done\(order\['訂單編號'\]\)
+else\:
+fdb\.mark\_order\_done\(order\['訂單編號'\]\)
+st\.success\("訂單更新成功！"\)
+st\.rerun\(\)
+except Exception as e\:
+st\.error\(f"更新訂單時發生錯誤\: \{str\(e\)\}"\)
+with col2\:
+if st\.button\("🗑️ 刪除", key\=f"del\_\{order\['訂單編號'\]\}"\)\:
+try\:
+fdb\.delete\_order\_by\_id\(order\['訂單編號'\]\)
+st\.success\("訂單已刪除！"\)
+st\.rerun\(\)
+except Exception as e\:
+st\.error\(f"刪除訂單時發生錯誤\: \{str\(e\)\}"\)
+except Exception as e\:
+st\.error\(f"處理訂單 \{order\.get\('訂單編號', '未知'\)\} 時發生錯誤\: \{str\(e\)\}"\)
+continue
+else\:
+st\.info\("目前沒有未完成訂單。"\)
+except Exception as e\:
+st\.error\(f"載入訂單時發生錯誤\: \{str\(e\)\}"\)
+\# \-\-\-\-\-\-\-\- 完成訂單頁 \-\-\-\-\-\-\-\-
 from datetime import datetime, date
-
-with tabs[2]:
-    st.title("完成訂單")
-
-    # ✅ 自動刪除非今天的完成訂單
-    all_finished = fdb.fetch_orders("完成")
-    today_str = date.today().isoformat()
-    for order in all_finished:
-        ts = order.get("timestamp")
-        if ts:
-            order_date = datetime.fromtimestamp(ts).date().isoformat()
-            if order_date != today_str:
-                fdb.delete_order_by_id(order['訂單編號'])
-
-    # ✅ 重新抓取已過濾後的資料
-    finished_orders = fdb.fetch_orders("完成")
-    finished_orders = sorted(finished_orders, key=lambda x: x.get("timestamp", 0))
-
-    total = sum(o.get('金額', 0) for o in finished_orders)
-    st.subheader(f"總營業額：${total}")
+with tabs\[2\]\:
+st\.title\("完成訂單"\)
+\# ✅ 自動刪除非今天的完成訂單
+all\_finished \= fdb\.fetch\_orders\("完成"\)
+today\_str \= date\.today\(\)\.isoformat\(\)
+for order in all\_finished\:
+ts \= order\.get\("timestamp"\)
+if ts\:
+order\_date \= datetime\.fromtimestamp\(ts\)\.date\(\)\.isoformat\(\)
+if order\_date \!\= today\_str\:
+fdb\.delete\_order\_by\_id\(order\['訂單編號'\]\)
+\# ✅ 重新抓取已過濾後的資料
+finished\_orders \= fdb\.fetch\_orders\("完成"\)
+finished\_orders \= sorted\(finished\_orders, key\=lambda x\: x\.get\("timestamp", 0\)\)
+total \= sum\(o\.get\('金額', 0\) for o in finished\_orders\)
+st\.subheader\(f"總營業額：</span>{total}")
 
     if finished_orders:
         for order in finished_orders:
@@ -300,11 +322,4 @@ with tabs[2]:
                     st.text(item)
             elif isinstance(content, str):
                 for item in content.split("\n"):
-                    st.text(item)
-            else:
-                st.caption("⚠️ 無品項內容")
-
-            if order.get("備註"):
-                st.caption(f"備註：{order['備註']}")
-    else:
-        st.info("尚無完成訂單。")
+                    st.
