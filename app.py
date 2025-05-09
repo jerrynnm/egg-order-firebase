@@ -8,6 +8,21 @@ import hashlib
 from dateutil import parser
 
 # -------- CSS --------
+for item in MENU:
+    if st.button(item, key=f"menu_button_{item}"):
+        st.session_state.selected_item = item
+        st.session_state.show_popup = True
+
+menu_items = list(MENU.keys())
+for i in range(0, len(menu_items), 2):
+    cols = st.columns(2)
+    for j in range(2):
+        if i + j < len(menu_items):
+            with cols[j]:
+                if st.button(menu_items[i + j], key=f"menu_button_{menu_items[i + j]}"):
+                    st.session_state.selected_item = menu_items[i + j]
+                    st.session_state.show_popup = True
+
 st.markdown("""
 <style>
 /* 1️⃣ 電腦版維持寬度 100%，上下排列（原樣） */
