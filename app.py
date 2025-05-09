@@ -8,37 +8,21 @@ import hashlib
 from dateutil import parser
 
 # -------- CSS --------
-st.subheader("暫存訂單顯示區")
+    st.subheader("暫存訂單顯示區")
+    for i, o in enumerate(st.session_state.temp_order):
+        st.write(f"{i+1}. {o['text']} (${o['price']})")
 
-# 調整按鈕寬度樣式（讓它不撐滿）
-import streamlit as st
-import streamlit.components.v1 as components
-components.html("""
-    <div style="display: flex; gap: 10px; margin-top: 10px;">
-        <button onclick="fetch('/?action=delete')" style="flex: 1; padding: 10px; font-size: 16px;">刪除暫存</button>
-        <button onclick="fetch('/?action=send')" style="flex: 1; padding: 10px; font-size: 16px;">送出</button>
-    </div>
-""", height=60)
-# 根據網址上的 query string 觸發對應邏輯
-query_action = st.experimental_get_query_params().get("action", [None])[0]
+    col_del, col_send = st.columns([1, 1])
+    with col_del:
+        if st.button("刪除暫存", key="delete_temp"):
+            if st.session_state.temp_order:
+                st.session_state.temp_order.pop()
 
-if query_action == "delete":
-    if st.session_state.temp_order:
-        st.session_state.temp_order.pop()
-        st.success("✅ 已刪除最後一筆暫存")
-    st.experimental_set_query_params()  # 清除 URL 避免重複觸發
+    with col_send:
+        if st.button("送出", key="send_temp_order"):
+            if st.session_state.temp_order:
+                send_temp_order_directly()
 
-elif query_action == "send":
-    if st.session_state.temp_order:
-        # 你原本的送出邏輯
-        order_id = str(int(time.time() * 1000))[-8:]
-        content_list = [o['text'] for o in st.session_state.temp_order]
-        total_price = sum(o['price'] for o in st.session_state.temp_order)
-        combined_note = ' / '.join([o.get('note', '') for o in st.session_state.temp_order if o.get('note')])
-        fdb.append_order(order_id, content_list, total_price, "未完成", combined_note)
-        st.session_state.temp_order.clear()
-        st.success("✅ 訂單已送出！")
-    st.experimental_set_query_params()
 
 
 # -------- MENU 資料 --------
