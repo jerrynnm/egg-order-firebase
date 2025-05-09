@@ -8,11 +8,27 @@ import hashlib
 from dateutil import parser
 
 # -------- CSS --------
-for item in MENU:
-    if st.button(item, key=f"menu_button_{item}"):
-        st.session_state.selected_item = item
-        st.session_state.show_popup = True
+# --- CSS 區塊（放在程式最上方一次即可） ---
+st.markdown("""
+<style>
+.center {text-align: center !important;}
+.stButton > button {
+    width: 100%;
+    margin-top: 10px;
+}
+.stTabs [role="tablist"] {
+    justify-content: center;
+}
+.stTabs [role="tab"] {
+    font-weight: bold;
+    font-size: 18px;
+}
+</style>
+""", unsafe_allow_html=True)
+# --- MENU 按鈕區塊（放在 tabs[0] 裡的選單區）---
+st.title("選擇餐點")
 
+# 讓 Menu 按鈕每兩顆一排，在手機上也能左右排
 menu_items = list(MENU.keys())
 for i in range(0, len(menu_items), 2):
     cols = st.columns(2)
@@ -23,38 +39,6 @@ for i in range(0, len(menu_items), 2):
                     st.session_state.selected_item = menu_items[i + j]
                     st.session_state.show_popup = True
 
-st.markdown("""
-<style>
-/* 1️⃣ 電腦版維持寬度 100%，上下排列（原樣） */
-.stButton > button {
-    width: 100%;
-    margin-top: 10px;
-}
-
-/* 2️⃣ 手機版：讓 Menu 區塊內的按鈕左右排列 + 寬度 50% */
-@media screen and (max-width: 600px) {
-    .menu-button-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        justify-content: space-between;
-    }
-    .menu-button-row .stButton {
-        flex: 0 0 48%;  /* 寬度約 50%，留點間距 */
-    }
-}
-
-/* 其他樣式維持 */
-.center {text-align: center !important;}
-.stTabs [role="tablist"] {
-    justify-content: center;
-}
-.stTabs [role="tab"] {
-    font-weight: bold;
-    font-size: 18px;
-}
-</style>
-""", unsafe_allow_html=True)
 
 
 # -------- MENU 資料 --------
