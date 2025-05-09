@@ -9,25 +9,32 @@ from dateutil import parser
 
 # -------- CSS --------
 # 左右兩顆按鈕（刪除暫存 / 送出）
-col1, col2 = st.columns(2)
-
-with col1:
-    if st.button("刪除暫存"):
-        # ✅ 寫入你的「刪除暫存」邏輯
-        st.success("已刪除暫存")
-
-with col2:
-    if st.button("送出"):
-        # ✅ 寫入你的「送出訂單」邏輯
-        st.success("已送出訂單")
+# 💡 讓按鈕區外觀一致並加點空間
 st.markdown("""
     <style>
-    .stButton>button {
+    .temp-button-row .stButton > button {
         width: 100%;
-        margin-top: 10px;
+        font-size: 16px;
+        padding: 0.5em;
     }
     </style>
 """, unsafe_allow_html=True)
+
+# 👍 原生 st.columns 實作（自動支援 Python 回傳）
+col1, col2 = st.columns(2)
+
+with col1:
+    with st.container():  # 加 container 可避免有時按鈕沒對齊
+        if st.button("刪除暫存", key="delete_temp"):
+            if st.session_state.temp_order:
+                st.session_state.temp_order.pop()
+                st.success("✅ 已刪除最後一筆暫存")
+
+with col2:
+    with st.container():
+        if st.button("送出", key="send_temp_order"):
+            if st.session_state.temp_order:
+                send_temp_order_directly()
 
 
 # -------- MENU 資料 --------
