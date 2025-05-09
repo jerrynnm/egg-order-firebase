@@ -8,14 +8,23 @@ import hashlib
 from dateutil import parser
 
 # -------- CSS --------
-st.markdown("""
-    <style>
-    .center {text-align: center !important;}
-    .stButton>button { width: 100%; margin-top: 10px; }
-    .stTabs [role="tablist"] { justify-content: center; }
-    .stTabs [role="tab"] { font-weight: bold; font-size: 18px; }
-    </style>
-""", unsafe_allow_html=True)
+st.subheader("暫存訂單顯示區")
+for i, o in enumerate(st.session_state.temp_order):
+    st.write(f"{i+1}. {o['text']} (${o['price']})")
+
+# ✅ 將送出與刪除的位置交換（送出在左、刪除在右）
+col_send, col_del = st.columns([1, 1])
+
+with col_send:
+    if st.button("送出", key="send_temp_order"):
+        if st.session_state.temp_order:
+            send_temp_order_directly()
+
+with col_del:
+    if st.button("刪除暫存", key="delete_temp"):
+        if st.session_state.temp_order:
+            st.session_state.temp_order.pop()
+
 # -------- MENU 資料 --------
 MENU = {
     "特價綜合雞蛋糕": 70,
