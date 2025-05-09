@@ -80,21 +80,25 @@ def update_completed_items(order_id, new_items, new_amount):
 
 # ✅ 更新未完成的剩餘品項
 
-def update_order_content(order_id, new_content):
+def update_completed_items(order_id, new_items, new_amount):
     try:
-        db.child("orders").child(order_id).update({"品項內容": new_content})
-    except Exception as e:
-        print_error_and_exit(e)
+        order_ref = db.child("orders").child(order_id)
+        existing = order_ref.get().val()
 
-def mark_order_done(order_id):
-    try:
-        db.child("orders").child(order_id).update({"狀態": "完成"})
-    except Exception as e:
-        print_error_and_exit(e)
+        # 原本完成品項 + 新增品項
+        old_completed = existing.get("completed_items", [])
+        updated_completed = old_completed + new_items
 
-def delete_order_by_id(order_id, status=None):
-    try:
-        db.child("orders").child(order_id).remove()
+        # 原本金額 + 新增金額
+        old_amount = existing.get("金額", 0)
+        updated_amount = old_amount + new_amount
+
+        # 更新品項、金額、完成清單與狀態
+        order_ref.update({
+            "completed_items": updated_completed,
+            "金額": updated_amount,
+            "狀態": "完成"
+        })
     except Exception as e:
         print_error_and_exit(e)
 
