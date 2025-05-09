@@ -8,27 +8,27 @@ import hashlib
 from dateutil import parser
 
 # -------- CSS --------
+# 左右兩顆按鈕（刪除暫存 / 送出）
+col1, col2 = st.columns(2)
+
+with col1:
+    if st.button("刪除暫存"):
+        # ✅ 寫入你的「刪除暫存」邏輯
+        st.success("已刪除暫存")
+
+with col2:
+    if st.button("送出"):
+        # ✅ 寫入你的「送出訂單」邏輯
+        st.success("已送出訂單")
 st.markdown("""
     <style>
-    /* 只針對我們自定義區塊內的按鈕，不影響 Streamlit 內建元件 */
-    .custom-button-row button {
-        flex: 1;
-        padding: 10px;
-        font-size: 16px;
-    }
-    .custom-button-row {
-        display: flex;
-        gap: 10px;
+    .stButton>button {
+        width: 100%;
         margin-top: 10px;
     }
     </style>
 """, unsafe_allow_html=True)
-st.markdown("""
-<div class="custom-button-row">
-    <button onclick="alert('已刪除暫存')">刪除暫存</button>
-    <button onclick="alert('已送出')">送出</button>
-</div>
-""", unsafe_allow_html=True)
+
 
 # -------- MENU 資料 --------
 MENU = {
