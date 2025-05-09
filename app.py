@@ -53,8 +53,12 @@ with tabs[0]:
         combined_note = ' / '.join([o.get('note', '') for o in st.session_state.temp_order if o.get('note')])
         fdb.append_order(order_id, content_list, total_price, "未完成", combined_note)
         st.session_state.temp_order.clear()
-        st.session_state.show_popup = False
-        st.success("✅ 訂單已送出！")
+        st.session_state.show_popup = True  # ✅ 保持在彈出畫面
+        st.session_state.success_message = "✅ 訂單已送出！"
+
+    if st.session_state.get("success_message"):
+        st.success(st.session_state.success_message)
+        st.session_state.success_message = None
 
     for item in MENU:
         if st.button(item, key=f"menu_button_{item}"):
@@ -161,8 +165,6 @@ with tabs[0]:
                 send_temp_order_directly()
 
     st.markdown('</div>', unsafe_allow_html=True)
-
-
 
 # -------- 未完成訂單頁 --------
 with tabs[1]:
