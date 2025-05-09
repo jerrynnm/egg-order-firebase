@@ -8,17 +8,24 @@ import hashlib
 from dateutil import parser
 
 # -------- CSS --------
+col_del, col_send = st.columns([1, 1])
+
+with col_del:
+    st.button("刪除暫存", key="custom_delete")
+
+with col_send:
+    st.button("送出", key="custom_submit")
 st.markdown("""
 <style>
-/* 按鈕寬度固定（不要太窄也不要撐滿） */
-.stButton > button {
-    width: 8em !important;        /* 固定寬度：大約等於一行中文字 */
+/* 🔸只針對 key 含 custom_ 的按鈕調整寬度與樣式 */
+button[kind="primary"][data-testid*="custom_"] {
+    width: 8em !important;
     text-align: center !important;
     margin-top: 10px;
     font-size: 1rem;
 }
 
-/* 防止手機上 st.columns 自動堆疊 */
+/* ✅ 保持手機上橫向排列 */
 @media screen and (max-width: 600px) {
     .block-container .stColumns {
         flex-wrap: nowrap !important;
@@ -26,6 +33,7 @@ st.markdown("""
 }
 </style>
 """, unsafe_allow_html=True)
+
 
 # -------- MENU 資料 --------
 MENU = {
