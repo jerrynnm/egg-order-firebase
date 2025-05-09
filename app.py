@@ -201,7 +201,12 @@ with tabs[1]:
 # -------- 完成訂單頁 --------
 with tabs[2]:
     st.title("完成訂單")
+
+    # ✅ 抓取並排序完成訂單
     finished_orders = fdb.fetch_orders("完成")
+    finished_orders = sorted(finished_orders, key=lambda x: x.get("timestamp", 0))
+
+    # ✅ 總營業額基於排序後的資料
     total = sum(o['金額'] for o in finished_orders) if finished_orders else 0
     st.subheader(f"總營業額：${total}")
 
