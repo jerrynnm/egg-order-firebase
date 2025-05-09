@@ -163,13 +163,38 @@ with tabs[1]:
 
             with col1:
                 if st.button("✅ 完成", key=f"done_{order['訂單編號']}"):
-                    updated_done = completed_items + checked
-                    if set(updated_done) == set(item_list):
-                        fdb.append_order(order['訂單編號'], updated_done, order['金額'], "完成", order.get("備註", ""))
-                        fdb.delete_order_by_id(order['訂單編號'])
-                    else:
-                        fdb.update_completed_items(order['訂單編號'], updated_done)
-                    st.rerun()
+    if checked_indices:
+        completed_items = [item_list[i] for i in checked_indices]
+        remaining_items = [item for i, item in enumerate(item_list) if i not in checked_indices]
+
+        # 根據品項內容估算金額
+        def estimate_price(text):
+            for k in MENU:
+                if text.startswith(k):
+                    if k == "原味雞蛋糕":
+                        match = re.search(r"x(\d+)", text)
+                        qty = int(match.group(1)) if match else 1
+                        return MENU[k] * qty
+                    return MENU[k]
+            return 50  # fallback default
+
+        completed_price = sum(estimate_price(i) for i in completed_items)
+
+        # ✅ 呼叫 Firebase 累加完成內容
+        fdb.update_completed_items(order['訂單編號'], completed_items, completed_price)
+
+        # 剩下未完成就更新；否則刪除整筆
+        if remaining_items:
+            fdb.update_order_content(order['訂單編號'], remaining_items)
+        else:
+            fdb.delete_order_by_id(order['訂單編號'])
+
+    else:
+        # 若整筆完成（未勾選但點完成），狀態改為完成
+        fdb.mark_order_done(order['訂單編號'])
+
+    st.rerun()
+
 
             with col2:
                 if st.button("🗑️ 刪除", key=f"del_{order['訂單編號']}"):
