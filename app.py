@@ -10,13 +10,13 @@ from dateutil import parser
 # -------- CSS --------
 st.markdown("""
 <style>
-/* 所有按鈕撐滿欄位，字置中 */
+/* 所有按鈕不再撐滿欄位，只置中、適當寬度 */
 .stButton > button {
-    width: 100% !important;
     text-align: center !important;
     margin-top: 10px;
-    padding: 0.75em;
+    padding: 0.5em 1em;
     font-size: 1rem;
+    width: auto !important; /* 取消 100% 撐滿 */
 }
 
 /* 強制手機上左右欄不要堆疊 */
@@ -27,6 +27,7 @@ st.markdown("""
 }
 </style>
 """, unsafe_allow_html=True)
+
 # -------- MENU 資料 --------
 MENU = {
     "特價綜合雞蛋糕": 70,
