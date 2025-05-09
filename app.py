@@ -12,16 +12,35 @@ from dateutil import parser
     for i, o in enumerate(st.session_state.temp_order):
         st.write(f"{i+1}. {o['text']} (${o['price']})")
 
-    col_del, col_send = st.columns([1, 1])
-    with col_del:
-        if st.button("刪除暫存", key="delete_temp"):
-            if st.session_state.temp_order:
-                st.session_state.temp_order.pop()
+   st.markdown("""
+<div style="display: flex; gap: 10px; margin-top: 10px;">
+    <a href="/?action=delete" style="flex: 1;">
+        <button style="width: 100%; padding: 10px; font-size: 16px; border-radius: 10px;">刪除暫存</button>
+    </a>
+    <a href="/?action=send" style="flex: 1;">
+        <button style="width: 100%; padding: 10px; font-size: 16px; border-radius: 10px;">送出</button>
+    </a>
+</div>
+""", unsafe_allow_html=True)
+action = st.query_params.get("action")
 
-    with col_send:
-        if st.button("送出", key="send_temp_order"):
-            if st.session_state.temp_order:
-                send_temp_order_directly()
+if action == "delete":
+    if st.session_state.temp_order:
+        st.session_state.temp_order.pop()
+        st.success("✅ 已刪除最後一筆暫存")
+    st.query_params.clear()
+
+elif action == "send":
+    if st.session_state.temp_order:
+        order_id = str(int(time.time() * 1000))[-8:]
+        content_list = [o['text'] for o in st.session_state.temp_order]
+        total_price = sum(o['price'] for o in st.session_state.temp_order)
+        combined_note = ' / '.join([o.get('note', '') for o in st.session_state.temp_order if o.get('note')])
+        fdb.append_order(order_id, content_list, total_price, "未完成", combined_note)
+        st.session_state.temp_order.clear()
+        st.success("✅ 訂單已送出！")
+    st.query_params.clear()
+
 
 
 
