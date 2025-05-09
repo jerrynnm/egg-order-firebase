@@ -10,20 +10,22 @@ from dateutil import parser
 # -------- CSS --------
 st.markdown("""
     <style>
-    .center {text-align: center !important;}
-    .stButton>button {
-        width: 100%;         /* 讓按鈕填滿欄位 */
+    .btn-row {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
         margin-top: 10px;
     }
-    .stTabs [role="tablist"] {
-        justify-content: center;
-    }
-    .stTabs [role="tab"] {
-        font-weight: bold;
-        font-size: 18px;
+    .btn-row .stButton > button {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        font-size: 24px;
+        padding: 0;
     }
     </style>
 """, unsafe_allow_html=True)
+
 # -------- MENU 資料 --------
 MENU = {
     "特價綜合雞蛋糕": 70,
@@ -156,21 +158,26 @@ with tabs[0]:
                         send_temp_order_directly()
 
     st.subheader("暫存訂單顯示區")
-    for i, o in enumerate(st.session_state.temp_order):
-        st.write(f"{i+1}. {o['text']} (${o['price']})")
 
-    col_del, col_send = st.columns([1, 1])
-    with col_del:
-        if st.button("刪除暫存", key="delete_temp"):
-            if st.session_state.temp_order:
-                st.session_state.temp_order.pop()
+for i, o in enumerate(st.session_state.temp_order):
+    st.write(f"{i+1}. {o['text']} (${o['price']})")
 
-    with col_send:
-        if st.button("送出", key="send_temp_order"):
-            if st.session_state.temp_order:
-                send_temp_order_directly()
+# ✅ 包起來：不再用 st.columns，改用 div 包住兩個按鈕
+st.markdown('<div class="btn-row">', unsafe_allow_html=True)
 
-    st.markdown('</div>', unsafe_allow_html=True)
+col1, col2 = st.columns([1, 1])
+with col1:
+    if st.button("🗑️", key="btn_delete"):
+        if st.session_state.temp_order:
+            st.session_state.temp_order.pop()
+            st.success("✅ 已刪除最後一筆暫存")
+
+with col2:
+    if st.button("📤", key="btn_send"):
+        if st.session_state.temp_order:
+            send_temp_order_directly()
+
+st.markdown('</div>', unsafe_allow_html=True)
 
 # -------- 未完成訂單頁 --------
 with tabs[1]:
