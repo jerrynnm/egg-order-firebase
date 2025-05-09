@@ -14,7 +14,7 @@ st.markdown("""
 
     /* ✅ 改這裡：將按鈕寬度從 10% 起跳，而非 100% */
     .stButton>button {
-        width: 30%;
+        width: 50%;
         min-width: 100px;  /* 防止過小 */
         margin-top: 10px;
         padding: 0.5em 1em;
