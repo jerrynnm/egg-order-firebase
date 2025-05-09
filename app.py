@@ -10,20 +10,26 @@ from dateutil import parser
 # -------- CSS --------
 st.markdown("""
     <style>
-    .center {text-align: center !important;}
-    .stButton>button {
-        width: 100%;         /* 讓按鈕填滿欄位 */
+    /* 只針對我們自定義區塊內的按鈕，不影響 Streamlit 內建元件 */
+    .custom-button-row button {
+        flex: 1;
+        padding: 10px;
+        font-size: 16px;
+    }
+    .custom-button-row {
+        display: flex;
+        gap: 10px;
         margin-top: 10px;
-    }
-    .stTabs [role="tablist"] {
-        justify-content: center;
-    }
-    .stTabs [role="tab"] {
-        font-weight: bold;
-        font-size: 18px;
     }
     </style>
 """, unsafe_allow_html=True)
+st.markdown("""
+<div class="custom-button-row">
+    <button onclick="alert('已刪除暫存')">刪除暫存</button>
+    <button onclick="alert('已送出')">送出</button>
+</div>
+""", unsafe_allow_html=True)
+
 # -------- MENU 資料 --------
 MENU = {
     "特價綜合雞蛋糕": 70,
