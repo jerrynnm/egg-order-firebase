@@ -8,12 +8,11 @@ import hashlib
 from dateutil import parser
 
 # -------- CSS --------
-import streamlit as st
-
 st.markdown("""
     <style>
     .center {text-align: center !important;}
     .stButton>button {
+        width: 100%;         /* 讓按鈕填滿欄位 */
         margin-top: 10px;
     }
     .stTabs [role="tablist"] {
@@ -23,64 +22,8 @@ st.markdown("""
         font-weight: bold;
         font-size: 18px;
     }
-
-    .button-container { /* 用於包含一組並排按鈕的容器 */
-        display: flex;
-        gap: 10px; /* 按鈕之間的間距 */
-    }
-
-    .button-container .stButton>button {
-        flex: 1; /* 讓按鈕在容器中平均分配空間 */
-        width: auto !important; /* 覆蓋 Streamlit 可能設置的固定寬度 */
-    }
-
-    /* 手機螢幕樣式 (寬度小於等於 600px) - 這裡您可以根據需要調整 */
-    @media (max-width: 600px) {
-        .button-container {
-            flex-direction: row; /* 保持水平排列 */
-            justify-content: space-around; /* 或 space-between，根據您的喜好 */
-            align-items: center; /* 垂直居中對齊 */
-        }
-        .button-container .stButton>button {
-            width: calc(50% - 5px) !important; /* 讓按鈕在手機上各佔一半寬度 */
-            font-size: 14px; /* 可以根據需要縮小字體 */
-        }
-    }
-
-    /* 平板電腦或稍大螢幕的樣式 (寬度介於 601px 和 992px) - 可選 */
-    @media (min-width: 601px) and (max-width: 992px) {
-        .button-container {
-            gap: 15px;
-        }
-        .button-container .stButton>button {
-            font-size: 16px;
-        }
-    }
-
-    /* 電腦螢幕樣式 (寬度大於 992px) - 可選 */
-    @media (min-width: 993px) {
-        .button-container {
-            gap: 20px;
-            justify-content: flex-start; /* 可以根據需要調整對齊方式 */
-        }
-        .button-container .stButton>button {
-            font-size: 18px;
-            min-width: 150px; /* 可以設定最小寬度 */
-        }
-    }
     </style>
 """, unsafe_allow_html=True)
-
-# 使用 st.markdown 和 div 標籤將按鈕包起來
-st.markdown("<div class='button-container'>", unsafe_allow_html=True)
-st.button("確認新增")
-st.button("直接送出")
-st.markdown("</div>", unsafe_allow_html=True)
-
-st.markdown("<div class='button-container'>", unsafe_allow_html=True)
-st.button("刪除暫存")
-st.button("送出")
-st.markdown("</div>", unsafe_allow_html=True)
 # -------- MENU 資料 --------
 MENU = {
     "特價綜合雞蛋糕": 70,
