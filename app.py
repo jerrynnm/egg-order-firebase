@@ -8,38 +8,22 @@ import hashlib
 from dateutil import parser
 
 # -------- CSS --------
-# --- CSS 區塊（放在程式最上方一次即可） ---
 st.markdown("""
-<style>
-.center {text-align: center !important;}
-.stButton > button {
-    width: 100%;
-    margin-top: 10px;
-}
-.stTabs [role="tablist"] {
-    justify-content: center;
-}
-.stTabs [role="tab"] {
-    font-weight: bold;
-    font-size: 18px;
-}
-</style>
+    <style>
+    .center {text-align: center !important;}
+    .stButton>button {
+        width: 100%;         /* 讓按鈕填滿欄位 */
+        margin-top: 10px;
+    }
+    .stTabs [role="tablist"] {
+        justify-content: center;
+    }
+    .stTabs [role="tab"] {
+        font-weight: bold;
+        font-size: 18px;
+    }
+    </style>
 """, unsafe_allow_html=True)
-# --- MENU 按鈕區塊（放在 tabs[0] 裡的選單區）---
-st.title("選擇餐點")
-
-# 讓 Menu 按鈕每兩顆一排，在手機上也能左右排
-menu_items = list(MENU.keys())
-for i in range(0, len(menu_items), 2):
-    cols = st.columns(2)
-    for j in range(2):
-        if i + j < len(menu_items):
-            with cols[j]:
-                if st.button(menu_items[i + j], key=f"menu_button_{menu_items[i + j]}"):
-                    st.session_state.selected_item = menu_items[i + j]
-                    st.session_state.show_popup = True
-
-
 
 # -------- MENU 資料 --------
 MENU = {
