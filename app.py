@@ -8,43 +8,40 @@ import hashlib
 from dateutil import parser
 
 # -------- CSS --------
-st.subheader("暫存訂單顯示區")
+with tabs[0]:
+    st.subheader("暫存訂單顯示區")
+
     for i, o in enumerate(st.session_state.temp_order):
         st.write(f"{i+1}. {o['text']} (${o['price']})")
 
-  # 美化按鈕（不撐滿寬度、較好左右排）
-st.markdown("""
-    <style>
-    .stButton > button {
-        width: auto;
-        min-width: 120px;
-        padding: 0.5em 1em;
-        font-size: 16px;
-    }
-    </style>
-""", unsafe_allow_html=True)
+    st.markdown("""
+        <style>
+        .stButton > button {
+            width: auto;
+            min-width: 120px;
+            padding: 0.5em 1em;
+            font-size: 16px;
+        }
+        </style>
+    """, unsafe_allow_html=True)
 
-# 左右排按鈕（100% 可放在你想要的位置）
-col1, col2 = st.columns([1, 1])
-with col1:
-    if st.button("刪除暫存", key="delete_temp_fixed"):
-        if st.session_state.temp_order:
-            st.session_state.temp_order.pop()
-            st.success("✅ 已刪除最後一筆暫存")
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        if st.button("刪除暫存", key="delete_temp_fixed"):
+            if st.session_state.temp_order:
+                st.session_state.temp_order.pop()
+                st.success("✅ 已刪除最後一筆暫存")
 
-with col2:
-    if st.button("送出", key="send_temp_fixed"):
-        if st.session_state.temp_order:
-            order_id = str(int(time.time() * 1000))[-8:]
-            content_list = [o['text'] for o in st.session_state.temp_order]
-            total_price = sum(o['price'] for o in st.session_state.temp_order)
-            combined_note = ' / '.join([o.get('note', '') for o in st.session_state.temp_order if o.get('note')])
-            fdb.append_order(order_id, content_list, total_price, "未完成", combined_note)
-            st.session_state.temp_order.clear()
-            st.success("✅ 訂單已送出！")
-
-
-
+    with col2:
+        if st.button("送出", key="send_temp_fixed"):
+            if st.session_state.temp_order:
+                order_id = str(int(time.time() * 1000))[-8:]
+                content_list = [o['text'] for o in st.session_state.temp_order]
+                total_price = sum(o['price'] for o in st.session_state.temp_order)
+                combined_note = ' / '.join([o.get('note', '') for o in st.session_state.temp_order if o.get('note')])
+                fdb.append_order(order_id, content_list, total_price, "未完成", combined_note)
+                st.session_state.temp_order.clear()
+                st.success("✅ 訂單已送出！")
 
 
 # -------- MENU 資料 --------
