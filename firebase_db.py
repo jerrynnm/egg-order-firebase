@@ -91,12 +91,25 @@ def update_order_content(order_id, new_items, new_amount):
         print_error_and_exit(e)
 
 # ✅ 累加完成項目與金額（專屬完成流程）
+def update_order_content(order_id, new_items, new_amount):
+    try:
+        db.child("orders").child(order_id).update({
+            "品項內容": new_items,
+            "金額": new_amount
+        })
+    except Exception as e:
+        print_error_and_exit(e)
+
+# ✅ 累加完成項目與金額（專屬完成流程）
 def update_completed_items(order_id, new_items, new_amount):
     try:
         order_ref = db.child("orders").child(order_id)
         existing = order_ref.get().val()
 
         old_completed = existing.get("completed_items", [])
+        if not isinstance(old_completed, list):
+            old_completed = [old_completed]
+
         updated_completed = old_completed + new_items
 
         old_amount = existing.get("金額", 0)
