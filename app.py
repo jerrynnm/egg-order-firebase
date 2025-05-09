@@ -10,16 +10,15 @@ from dateutil import parser
 # -------- CSS --------
 st.markdown("""
 <style>
-/* 所有按鈕不再撐滿欄位，只置中、適當寬度 */
+/* 按鈕寬度固定（不要太窄也不要撐滿） */
 .stButton > button {
+    width: 8em !important;        /* 固定寬度：大約等於一行中文字 */
     text-align: center !important;
     margin-top: 10px;
-    padding: 0.5em 1em;
     font-size: 1rem;
-    width: auto !important; /* 取消 100% 撐滿 */
 }
 
-/* 強制手機上左右欄不要堆疊 */
+/* 防止手機上 st.columns 自動堆疊 */
 @media screen and (max-width: 600px) {
     .block-container .stColumns {
         flex-wrap: nowrap !important;
