@@ -231,68 +231,28 @@ with tabs[1]:
 with tabs[2]:
     st.title("完成訂單")
 
-    # 取得所有訂單（不限狀態）
-    all_orders = fdb.fetch_orders(status=None)
-    st.write("DEBUG", all_orders)  # 除錯用，完成後可刪
+    finished_orders = fdb.fetch_orders("完成")
+    finished_orders = sorted(finished_orders, key=lambda x: x.get("timestamp", 0))
 
-    # 只要「狀態=完成」或「completed_items 非空」就顯示
-    merged_orders = {}
-    for order in all_orders:
-        order_id = order.get("訂單編號")
-        if not order_id:
-            continue
-
-        # 只要狀態=完成，或 completed_items 有內容就顯示
-        completed = order.get("completed_items", [])
-        is_completed = order.get("狀態") == "完成" or (completed and len(completed) > 0)
-        if not is_completed:
-            continue
-
-        if order_id not in merged_orders:
-            merged_orders[order_id] = {
-                "訂單編號": order_id,
-                "completed_items": [],
-                "金額": 0,
-                "備註": order.get("備註", ""),
-                "timestamp": order.get("timestamp", 0)
-            }
-
-        # 如果 completed_items 有內容就合併
-        if completed:
-            merged_orders[order_id]["completed_items"].extend(completed)
-        # 如果狀態=完成但 completed_items 沒內容，則顯示品項內容
-        elif order.get("狀態") == "完成":
-            content = order.get("品項內容", [])
-            if isinstance(content, str):
-                content = [content]
-            merged_orders[order_id]["completed_items"].extend(content)
-
-        merged_orders[order_id]["金額"] += order.get("金額", 0)
-
-        # 更新最新完成時間
-        ts = order.get("timestamp", 0)
-        if ts > merged_orders[order_id]["timestamp"]:
-            merged_orders[order_id]["timestamp"] = ts
-
-    # 排序
-    finished_orders = sorted(merged_orders.values(), key=lambda x: x["timestamp"])
-
-    # 計算總營業額
-    total = sum(order["金額"] for order in finished_orders)
+    total = sum(o.get('金額', 0) for o in finished_orders)
     st.subheader(f"總營業額：${total}")
 
-    # 顯示每筆完成訂單
     if finished_orders:
         for order in finished_orders:
-            st.markdown(f"#### 訂單 {order['訂單編號']}（金額: ${order['金額']}）")
-            for item in order["completed_items"]:
-                st.text(item)
+            st.markdown(f"#### 訂單 {order.get('訂單編號', '未知')}（金額: ${order.get('金額', 0)}）")
+
+            # ✅ 顯示「品項內容」（原始品項 + 分批完成的品項）
+            content = order.get('品項內容') or order.get('completed_items') or []
+            if isinstance(content, list):
+                for item in content:
+                    st.text(item)
+            elif isinstance(content, str):
+                for item in content.split("\n"):
+                    st.text(item)
+            else:
+                st.caption("⚠️ 無品項內容")
+
             if order.get("備註"):
                 st.caption(f"備註：{order['備註']}")
-            # 顯示完成時間
-            timestamp = order.get("timestamp", 0)
-            if timestamp:
-                time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))
-                st.caption(f"完成時間：{time_str}")
     else:
         st.info("尚無完成訂單。")
