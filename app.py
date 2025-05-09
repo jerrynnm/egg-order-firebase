@@ -49,7 +49,13 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
-
+# -------- MENU 資料 --------
+MENU = {
+    "特價綜合雞蛋糕": 70,
+    "內餡雞蛋糕": 50,
+    "原味雞蛋糕": 60
+}
+FLAVORS = ["拉絲起司", "奧利奧 Oreo", "黑糖麻糬"]
 # -------- 初始化 --------
 if 'temp_order' not in st.session_state:
     st.session_state.temp_order = []
