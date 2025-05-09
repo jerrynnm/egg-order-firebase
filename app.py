@@ -14,13 +14,17 @@ st.markdown("""
         text-align: center !important;
     }
 
+    /* ✅ 美化所有按鈕 */
     .stButton>button {
         margin: 6px;
         min-width: 120px;
-        max-width: 150px;
-        padding: 6px 12px;
+        max-width: 160px;
+        padding: 8px 16px;
+        font-size: 16px;
+        border-radius: 8px;
     }
 
+    /* ✅ 分頁 Tab 排版 */
     .stTabs [role="tablist"] {
         justify-content: center;
     }
@@ -30,16 +34,16 @@ st.markdown("""
         font-size: 18px;
     }
 
-    /* ✅ 強制 st.columns 內的元素橫向排列 */
-    .st-emotion-cache-1kyxreq {
+    /* ✅ 強制所有 st.columns 內元素橫向排列 */
+    section.main > div > div > div > div > div {
         flex-direction: row !important;
         justify-content: space-evenly !important;
         flex-wrap: wrap;
     }
 
-    /* ✅ 手機上也不讓按鈕換行堆疊 */
+    /* ✅ 手機畫面下也維持左右排列 */
     @media (max-width: 768px) {
-        .st-emotion-cache-1kyxreq {
+        section.main > div > div > div > div > div {
             flex-direction: row !important;
             justify-content: space-evenly !important;
             flex-wrap: nowrap !important;
@@ -47,6 +51,7 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
+
 
 # -------- MENU 資料 --------
 MENU = {
