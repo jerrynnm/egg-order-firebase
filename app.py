@@ -11,9 +11,17 @@ from dateutil import parser
 st.markdown("""
     <style>
     .center {text-align: center !important;}
-    .stButton>button { width: 100%; margin-top: 10px; }
-    .stTabs [role="tablist"] { justify-content: center; }
-    .stTabs [role="tab"] { font-weight: bold; font-size: 18px; }
+    .stButton>button {
+        width: 100%;
+        margin-top: 10px;
+    }
+    .stTabs [role="tablist"] {
+        justify-content: center;
+    }
+    .stTabs [role="tab"] {
+        font-weight: bold;
+        font-size: 18px;
+    }
     </style>
 """, unsafe_allow_html=True)
 # -------- MENU 資料 --------
