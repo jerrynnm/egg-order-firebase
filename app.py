@@ -8,47 +8,22 @@ import hashlib
 from dateutil import parser
 
 # -------- CSS --------
-import streamlit as st
-import time
-import re
-
-# -------- CSS 全域樣式 --------
 st.markdown("""
     <style>
     .center {text-align: center !important;}
-
-    .btn-row {
-        display: flex;
-        justify-content: center;
-        gap: 20px;
+    .stButton>button {
+        width: 100%;         /* 讓按鈕填滿欄位 */
         margin-top: 10px;
-    }
-    .btn-row .stButton > button {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        font-size: 24px;
-        padding: 0;
     }
     .stTabs [role="tablist"] {
         justify-content: center;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        overflow-y: hidden;
-        gap: 10px;
-        max-height: 60px;
     }
     .stTabs [role="tab"] {
         font-weight: bold;
         font-size: 18px;
-        min-width: 100px;
-        width: 40%;
-        flex: 0 0 auto;
-        text-align: center;
     }
     </style>
 """, unsafe_allow_html=True)
-
 # -------- MENU 資料 --------
 MENU = {
     "特價綜合雞蛋糕": 70,
@@ -56,10 +31,18 @@ MENU = {
     "原味雞蛋糕": 60
 }
 FLAVORS = ["拉絲起司", "奧利奧 Oreo", "黑糖麻糬"]
-
 # -------- 初始化 --------
 if 'temp_order' not in st.session_state:
     st.session_state.temp_order = []
+
+def expand_order_items(order_items):
+    return [item['text'] for item in order_items]
+
+def estimate_price(item_text):
+    if item_text.startswith("原味雞蛋糕"):
+        match = re.search(r"x(\d+)", item_text)
+        return MENU["原味雞蛋糕"] * int(match.group(1)) if match else MENU["原味雞蛋糕"]
+    return MENU["內餡雞蛋糕"]
 
 # -------- 分頁 --------
 tabs = st.tabs(["暫存", "未完成", "完成"])
@@ -76,7 +59,7 @@ with tabs[0]:
         combined_note = ' / '.join([o.get('note', '') for o in st.session_state.temp_order if o.get('note')])
         fdb.append_order(order_id, content_list, total_price, "未完成", combined_note)
         st.session_state.temp_order.clear()
-        st.session_state.show_popup = True
+        st.session_state.show_popup = True  # ✅ 保持在彈出畫面
         st.session_state.success_message = "✅ 訂單已送出！"
 
     if st.session_state.get("success_message"):
@@ -173,26 +156,21 @@ with tabs[0]:
                         send_temp_order_directly()
 
     st.subheader("暫存訂單顯示區")
-
     for i, o in enumerate(st.session_state.temp_order):
         st.write(f"{i+1}. {o['text']} (${o['price']})")
 
-    st.markdown('<div class="btn-row">', unsafe_allow_html=True)
-
-    col1, col2 = st.columns([1, 1])
-    with col1:
-        if st.button("🗑️", key="btn_delete"):
+    col_del, col_send = st.columns([1, 1])
+    with col_del:
+        if st.button("刪除暫存", key="delete_temp"):
             if st.session_state.temp_order:
                 st.session_state.temp_order.pop()
-                st.success("✅ 已刪除最後一筆暫存")
 
-    with col2:
-        if st.button("📤", key="btn_send"):
+    with col_send:
+        if st.button("送出", key="send_temp_order"):
             if st.session_state.temp_order:
                 send_temp_order_directly()
 
     st.markdown('</div>', unsafe_allow_html=True)
-
 
 # -------- 未完成訂單頁 --------
 with tabs[1]:
