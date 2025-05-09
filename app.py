@@ -60,23 +60,17 @@ with tabs[0]:
         combined_note = ' / '.join([o.get('note', '') for o in st.session_state.temp_order if o.get('note')])
         fdb.append_order(order_id, content_list, total_price, "未完成", combined_note)
         st.session_state.temp_order.clear()
-        st.session_state.show_popup = True
+        st.session_state.show_popup = True  # ✅ 保持在彈出畫面
         st.session_state.success_message = "✅ 訂單已送出！"
 
     if st.session_state.get("success_message"):
         st.success(st.session_state.success_message)
         st.session_state.success_message = None
 
-    # ✅ Menu 按鈕改為兩顆一排，支援手機左右排
-    menu_items = list(MENU.keys())
-    for i in range(0, len(menu_items), 2):
-        cols = st.columns(2)
-        for j in range(2):
-            if i + j < len(menu_items):
-                with cols[j]:
-                    if st.button(menu_items[i + j], key=f"menu_button_{menu_items[i + j]}"):
-                        st.session_state.selected_item = menu_items[i + j]
-                        st.session_state.show_popup = True
+    for item in MENU:
+        if st.button(item, key=f"menu_button_{item}"):
+            st.session_state.selected_item = item
+            st.session_state.show_popup = True
 
     if st.session_state.get('show_popup', False):
         item = st.session_state['selected_item']
