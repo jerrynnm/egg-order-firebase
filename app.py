@@ -8,23 +8,60 @@ import hashlib
 from dateutil import parser
 
 # -------- CSS --------
+import streamlit as st
+import time
+import re
+
+# -------- CSS 全域樣式 --------
 st.markdown("""
     <style>
     .center {text-align: center !important;}
+
     .stButton>button {
-        width: 100%;         /* 讓按鈕填滿欄位 */
+        width: 100%;
         margin-top: 10px;
     }
+
     .stTabs [role="tablist"] {
         justify-content: center;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        gap: 10px;
+        max-height: 60px;
     }
+
     .stTabs [role="tab"] {
         font-weight: bold;
         font-size: 18px;
+        min-width: 100px;
+        width: 40%;
+        flex: 0 0 auto;
+        text-align: center;
+    }
+
+    .round-button {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: #FF6961;
+        color: white;
+        font-size: 24px;
+        border: none;
+        cursor: pointer;
+        display: inline-block;
+    }
+    .send-button {
+        background-color: #4CAF50;
+    }
+    .button-row {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-top: 10px;
     }
     </style>
 """, unsafe_allow_html=True)
-
 
 # -------- MENU 資料 --------
 MENU = {
@@ -33,21 +70,32 @@ MENU = {
     "原味雞蛋糕": 60
 }
 FLAVORS = ["拉絲起司", "奧利奧 Oreo", "黑糖麻糬"]
+
 # -------- 初始化 --------
 if 'temp_order' not in st.session_state:
     st.session_state.temp_order = []
 
-def expand_order_items(order_items):
-    return [item['text'] for item in order_items]
-
-def estimate_price(item_text):
-    if item_text.startswith("原味雞蛋糕"):
-        match = re.search(r"x(\d+)", item_text)
-        return MENU["原味雞蛋糕"] * int(match.group(1)) if match else MENU["原味雞蛋糕"]
-    return MENU["內餡雞蛋糕"]
-
 # -------- 分頁 --------
 tabs = st.tabs(["暫存", "未完成", "完成"])
+
+# -------- 處理 query 參數動作 --------
+action = st.query_params.get("action")
+if action == "delete":
+    if st.session_state.temp_order:
+        st.session_state.temp_order.pop()
+        st.success("✅ 已刪除最後一筆暫存")
+    st.query_params.clear()
+
+elif action == "send":
+    if st.session_state.temp_order:
+        order_id = str(int(time.time() * 1000))[-8:]
+        content_list = [o['text'] for o in st.session_state.temp_order]
+        total_price = sum(o['price'] for o in st.session_state.temp_order)
+        combined_note = ' / '.join([o.get('note', '') for o in st.session_state.temp_order if o.get('note')])
+        fdb.append_order(order_id, content_list, total_price, "未完成", combined_note)
+        st.session_state.temp_order.clear()
+        st.success("✅ 訂單已送出！")
+    st.query_params.clear()
 
 # -------- 暫存頁 --------
 with tabs[0]:
@@ -61,7 +109,7 @@ with tabs[0]:
         combined_note = ' / '.join([o.get('note', '') for o in st.session_state.temp_order if o.get('note')])
         fdb.append_order(order_id, content_list, total_price, "未完成", combined_note)
         st.session_state.temp_order.clear()
-        st.session_state.show_popup = True  # ✅ 保持在彈出畫面
+        st.session_state.show_popup = True
         st.session_state.success_message = "✅ 訂單已送出！"
 
     if st.session_state.get("success_message"):
@@ -161,18 +209,19 @@ with tabs[0]:
     for i, o in enumerate(st.session_state.temp_order):
         st.write(f"{i+1}. {o['text']} (${o['price']})")
 
-    col_del, col_send = st.columns([1, 1])
-    with col_del:
-        if st.button("刪除暫存", key="delete_temp"):
-            if st.session_state.temp_order:
-                st.session_state.temp_order.pop()
-
-    with col_send:
-        if st.button("送出", key="send_temp_order"):
-            if st.session_state.temp_order:
-                send_temp_order_directly()
+    st.markdown("""
+    <div class="button-row">
+        <form action="/?action=delete" method="get">
+            <button class="round-button" type="submit" title="刪除暫存">🗑️</button>
+        </form>
+        <form action="/?action=send" method="get">
+            <button class="round-button send-button" type="submit" title="送出訂單">📤</button>
+        </form>
+    </div>
+    """, unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
+
 
 # -------- 未完成訂單頁 --------
 with tabs[1]:
