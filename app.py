@@ -8,7 +8,7 @@ import hashlib
 from dateutil import parser
 
 # -------- CSS --------
-ist.markdown("""
+st.markdown("""
     <style>
     .center {text-align: center !important;}
     .stButton>button {
