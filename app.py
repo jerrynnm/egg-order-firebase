@@ -15,9 +15,10 @@ st.markdown("""
     }
 
     .stButton>button {
-        width: 100%;
-        margin-top: 10px;
-        margin-bottom: 10px;
+        margin: 6px;
+        min-width: 120px;
+        max-width: 150px;
+        padding: 6px 12px;
     }
 
     .stTabs [role="tablist"] {
@@ -29,19 +30,23 @@ st.markdown("""
         font-size: 18px;
     }
 
-    /* ✅ 確保手機上按鈕可以左右排列 */
-    .stColumns div {
-        display: flex;
-        justify-content: center;
+    /* ✅ 強制 st.columns 內的元素橫向排列 */
+    .st-emotion-cache-1kyxreq {
+        flex-direction: row !important;
+        justify-content: space-evenly !important;
+        flex-wrap: wrap;
     }
 
-    .stColumns button {
-        min-width: 120px;
-        max-width: 160px;
+    /* ✅ 手機上也不讓按鈕換行堆疊 */
+    @media (max-width: 768px) {
+        .st-emotion-cache-1kyxreq {
+            flex-direction: row !important;
+            justify-content: space-evenly !important;
+            flex-wrap: nowrap !important;
+        }
     }
     </style>
 """, unsafe_allow_html=True)
-
 
 # -------- MENU 資料 --------
 MENU = {
