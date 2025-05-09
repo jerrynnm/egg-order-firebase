@@ -56,7 +56,6 @@ def fetch_orders(status="未完成"):
         return []
 
 # ✅ 更新完成品項並累加金額
-
 def update_completed_items(order_id, new_items, new_amount):
     try:
         order_ref = db.child("orders").child(order_id)
@@ -72,11 +71,12 @@ def update_completed_items(order_id, new_items, new_amount):
 
         order_ref.update({
             "品項內容": updated_items,
-            "金額": updated_amount,
-            "狀態": "完成"
+            "金額": updated_amount
+            # ⛔ 不自動改為完成，由 app.py 視剩餘品項決定
         })
     except Exception as e:
         print_error_and_exit(e)
+
 
 # ✅ 更新未完成的剩餘品項
 
