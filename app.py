@@ -32,6 +32,12 @@ if 'temp_order' not in st.session_state:
 def expand_order_items(order_items):
     return [item['text'] for item in order_items]
 
+def estimate_price(item_text):
+    if item_text.startswith("原味雞蛋糕"):
+        match = re.search(r"x(\d+)", item_text)
+        return MENU["原味雞蛋糕"] * int(match.group(1)) if match else MENU["原味雞蛋糕"]
+    return MENU["內餡雞蛋糕"]
+
 # -------- 分頁 --------
 tabs = st.tabs(["暫存", "未完成", "完成"])
 
@@ -144,37 +150,30 @@ with tabs[1]:
         for order in unfinished_orders:
             st.subheader(f"訂單 {order['訂單編號']}（金額: ${order['金額']}）")
             item_list = order["品項內容"] if isinstance(order["品項內容"], list) else order["品項內容"].split("\n")
-            checked_indices = [i for i, item in enumerate(item_list) if st.checkbox(f"\U0001F7E0 {item}", key=f"{order['訂單編號']}_{i}")]
+            completed_items = order.get("completed_items", [])
+            remaining_items = [item for item in item_list if item not in completed_items]
+
+            checked = []
+            for i, item in enumerate(remaining_items):
+                if st.checkbox(f"\U0001F7E0 {item}", key=f"{order['訂單編號']}_{i}"):
+                    checked.append(item)
 
             st.markdown("---")
             col1, col2 = st.columns(2)
 
             with col1:
                 if st.button("✅ 完成", key=f"done_{order['訂單編號']}"):
-                    if checked_indices:
-                        completed_items = [item_list[i] for i in checked_indices]
-                        remaining_items = [item for i, item in enumerate(item_list) if i not in checked_indices]
-                        for item in completed_items:
-                            fdb.append_order(str(int(time.time() * 1000))[-8:], [item], MENU["內餡雞蛋糕"], "完成", order.get("備註", ""))
-                            time.sleep(0.01)
-                        if remaining_items:
-                            fdb.update_order_content(order['訂單編號'], remaining_items)
-                        else:
-                            fdb.delete_order_by_id(order['訂單編號'])
+                    updated_done = completed_items + checked
+                    if set(updated_done) == set(item_list):
+                        fdb.append_order(order['訂單編號'], updated_done, order['金額'], "完成", order.get("備註", ""))
+                        fdb.delete_order_by_id(order['訂單編號'])
                     else:
-                        fdb.mark_order_done(order['訂單編號'])
+                        fdb.update_completed_items(order['訂單編號'], updated_done)
                     st.rerun()
 
             with col2:
                 if st.button("🗑️ 刪除", key=f"del_{order['訂單編號']}"):
-                    if checked_indices:
-                        new_list = [item for i, item in enumerate(item_list) if i not in checked_indices]
-                        if new_list:
-                            fdb.update_order_content(order['訂單編號'], new_list)
-                        else:
-                            fdb.delete_order_by_id(order['訂單編號'])
-                    else:
-                        fdb.delete_order_by_id(order['訂單編號'])
+                    fdb.delete_order_by_id(order['訂單編號'])
                     st.rerun()
     else:
         st.info("目前沒有未完成訂單。")
@@ -200,4 +199,3 @@ with tabs[2]:
                 st.caption(f"備註：{order['備註']}")
     else:
         st.info("尚無完成訂單。")
-
