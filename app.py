@@ -136,70 +136,107 @@ with tabs[0]:
 # -------- 未完成訂單頁 --------
 with tabs[1]:
     st.title("未完成訂單")
-    unfinished_orders = fdb.fetch_orders("未完成")
+    
+    try:
+        unfinished_orders = fdb.fetch_orders("未完成")
+        
+        # 使用 session state 來追踪訂單狀態變化
+        raw_data = json.dumps(unfinished_orders, sort_keys=True, ensure_ascii=False)
+        current_hash = hashlib.md5(raw_data.encode("utf-8")).hexdigest()
+        
+        if "last_unfinished_hash" not in st.session_state:
+            st.session_state.last_unfinished_hash = None
+            
+        if current_hash != st.session_state.last_unfinished_hash:
+            st.session_state.last_unfinished_hash = current_hash
+            st.rerun()
 
-    raw_data = json.dumps(unfinished_orders, sort_keys=True, ensure_ascii=False)
-    current_hash = hashlib.md5(raw_data.encode("utf-8")).hexdigest()
-    if "last_unfinished_hash" not in st.session_state:
-        st.session_state.last_unfinished_hash = None
-    if current_hash != st.session_state.last_unfinished_hash:
-        st.session_state.last_unfinished_hash = current_hash
-        st.rerun()
+        if unfinished_orders:
+            for order in unfinished_orders:
+                try:
+                    # 確保訂單有必要的欄位
+                    if not all(key in order for key in ['訂單編號', '金額', '品項內容']):
+                        st.error(f"訂單資料不完整: {order['訂單編號']}")
+                        continue
+                        
+                    st.subheader(f"訂單 {order['訂單編號']}（金額: ${order['金額']}）")
+                    
+                    # 處理品項內容
+                    item_list = order["品項內容"] if isinstance(order["品項內容"], list) else order["品項內容"].split("\n")
+                    completed_items = order.get("completed_items", [])
+                    remaining_items = [item for item in item_list if item not in completed_items]
 
-    if unfinished_orders:
-        for order in unfinished_orders:
-            st.subheader(f"訂單 {order['訂單編號']}（金額: ${order['金額']}）")
-            item_list = order["品項內容"] if isinstance(order["品項內容"], list) else order["品項內容"].split("\n")
-            completed_items = order.get("completed_items", [])
-            remaining_items = [item for item in item_list if item not in completed_items]
+                    # 使用 session state 來追踪已勾選的項目
+                    checkbox_key = f"checked_{order['訂單編號']}"
+                    if checkbox_key not in st.session_state:
+                        st.session_state[checkbox_key] = []
 
-            checked = []
-            for i, item in enumerate(remaining_items):
-                if st.checkbox(f"\U0001F7E0 {item}", key=f"{order['訂單編號']}_{i}"):
-                    checked.append(item)
+                    checked = []
+                    for i, item in enumerate(remaining_items):
+                        checkbox_key = f"{order['訂單編號']}_{i}"
+                        if st.checkbox(f"\U0001F7E0 {item}", key=checkbox_key):
+                            checked.append(item)
 
-            st.markdown("---")
-            col1, col2 = st.columns(2)
+                    st.markdown("---")
+                    col1, col2 = st.columns(2)
 
-            with col1:
-                if st.button("✅ 完成", key=f"done_{order['訂單編號']}"):
-                    if checked:
-                        def estimate_price(text):
-                            for k in MENU:
-                                if text.startswith(k):
-                                    if k == "原味雞蛋糕":
-                                        match = re.search(r"x(\\d+)", text)
-                                        qty = int(match.group(1)) if match else 1
-                                        return MENU[k] * qty
-                                    return MENU[k]
-                            return 50
+                    with col1:
+                        if st.button("✅ 完成", key=f"done_{order['訂單編號']}"):
+                            try:
+                                if checked:
+                                    def estimate_price(text):
+                                        for k in MENU:
+                                            if text.startswith(k):
+                                                if k == "原味雞蛋糕":
+                                                    match = re.search(r"x(\d+)", text)
+                                                    qty = int(match.group(1)) if match else 1
+                                                    return MENU[k] * qty
+                                                return MENU[k]
+                                        return 50
 
-                        completed_price = sum(estimate_price(i) for i in checked)
+                                    completed_price = sum(estimate_price(i) for i in checked)
 
-                        # 更新 completed_items 欄位
-                        updated_items = completed_items + checked
-                        fdb.update_completed_items(order['訂單編號'], updated_items)
+                                    # 更新 completed_items
+                                    updated_items = completed_items + checked
+                                    fdb.update_completed_items(order['訂單編號'], updated_items)
 
-                        # 加總金額並同步品項內容
-                        old_content = order["品項內容"] if isinstance(order["品項內容"], list) else [order["品項內容"]]
-                        new_content = old_content + checked
-                        new_amount = order.get("金額", 0) + completed_price
-                        fdb.update_order_content(order['訂單編號'], new_content, new_amount)
+                                    # 更新訂單內容和金額
+                                    old_content = order["品項內容"] if isinstance(order["品項內容"], list) else [order["品項內容"]]
+                                    new_content = old_content + checked
+                                    new_amount = order.get("金額", 0) + completed_price
+                                    fdb.update_order_content(order['訂單編號'], new_content, new_amount)
 
-                        # 如果所有品項都完成了，就標記為完成
-                        new_remaining = [item for item in remaining_items if item not in checked]
-                        if not new_remaining:
-                            fdb.mark_order_done(order['訂單編號'])
-                    else:
-                        fdb.mark_order_done(order['訂單編號'])
-                    st.rerun()
+                                    # 檢查是否所有品項都完成
+                                    new_remaining = [item for item in remaining_items if item not in checked]
+                                    if not new_remaining:
+                                        fdb.mark_order_done(order['訂單編號'])
+                                else:
+                                    fdb.mark_order_done(order['訂單編號'])
+                                    
+                                st.success("訂單更新成功！")
+                                st.rerun()
+                                
+                            except Exception as e:
+                                st.error(f"更新訂單時發生錯誤: {str(e)}")
 
-            with col2:
-                if st.button("🗑️ 刪除", key=f"del_{order['訂單編號']}"):
-                    fdb.delete_order_by_id(order['訂單編號'])
-                    st.rerun()
-    else:
-        st.info("目前沒有未完成訂單。")
+                    with col2:
+                        if st.button("🗑️ 刪除", key=f"del_{order['訂單編號']}"):
+                            try:
+                                fdb.delete_order_by_id(order['訂單編號'])
+                                st.success("訂單已刪除！")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"刪除訂單時發生錯誤: {str(e)}")
+                                
+                except Exception as e:
+                    st.error(f"處理訂單 {order.get('訂單編號', '未知')} 時發生錯誤: {str(e)}")
+                    continue
+                    
+        else:
+            st.info("目前沒有未完成訂單。")
+            
+    except Exception as e:
+        st.error(f"載入訂單時發生錯誤: {str(e)}")
 # -------- 完成訂單頁 --------
 with tabs[2]:
     st.title("完成訂單")
