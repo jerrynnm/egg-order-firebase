@@ -10,12 +10,38 @@ from dateutil import parser
 # -------- CSS --------
 st.markdown("""
     <style>
-    .center {text-align: center !important;}
-    .stButton>button { width: 100%; margin-top: 10px; }
-    .stTabs [role="tablist"] { justify-content: center; }
-    .stTabs [role="tab"] { font-weight: bold; font-size: 18px; }
+    .center {
+        text-align: center !important;
+    }
+
+    .stButton>button {
+        width: 100%;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+
+    .stTabs [role="tablist"] {
+        justify-content: center;
+    }
+
+    .stTabs [role="tab"] {
+        font-weight: bold;
+        font-size: 18px;
+    }
+
+    /* ✅ 確保手機上按鈕可以左右排列 */
+    .stColumns div {
+        display: flex;
+        justify-content: center;
+    }
+
+    .stColumns button {
+        min-width: 120px;
+        max-width: 160px;
+    }
     </style>
 """, unsafe_allow_html=True)
+
 
 # -------- MENU 資料 --------
 MENU = {
