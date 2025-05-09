@@ -8,32 +8,22 @@ import hashlib
 from dateutil import parser
 
 # -------- CSS --------
-col_del, col_send = st.columns([1, 1])
-
-with col_del:
-    st.button("刪除暫存", key="custom_delete")
-
-with col_send:
-    st.button("送出", key="custom_submit")
 st.markdown("""
-<style>
-/* 🔸只針對 key 含 custom_ 的按鈕調整寬度與樣式 */
-button[kind="primary"][data-testid*="custom_"] {
-    width: 8em !important;
-    text-align: center !important;
-    margin-top: 10px;
-    font-size: 1rem;
-}
-
-/* ✅ 保持手機上橫向排列 */
-@media screen and (max-width: 600px) {
-    .block-container .stColumns {
-        flex-wrap: nowrap !important;
+    <style>
+    .center {text-align: center !important;}
+    .stButton>button {
+        width: 100%;         /* 讓按鈕填滿欄位 */
+        margin-top: 10px;
     }
-}
-</style>
+    .stTabs [role="tablist"] {
+        justify-content: center;
+    }
+    .stTabs [role="tab"] {
+        font-weight: bold;
+        font-size: 18px;
+    }
+    </style>
 """, unsafe_allow_html=True)
-
 
 # -------- MENU 資料 --------
 MENU = {
