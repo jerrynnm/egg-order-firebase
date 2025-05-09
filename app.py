@@ -8,12 +8,11 @@ import hashlib
 from dateutil import parser
 
 # -------- CSS --------
-# CSS 保留，貼在最上方
 st.markdown("""
     <style>
     .center {text-align: center !important;}
     .stButton>button {
-        width: 100%;
+        width: 100%;         /* 讓按鈕填滿欄位 */
         margin-top: 10px;
     }
     .stTabs [role="tablist"] {
@@ -25,18 +24,6 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
-
-# 新的按鈕區塊（橫向排列）
-col1, col2 = st.columns(2)
-
-with col1:
-    if st.button("送出"):
-        st.success("訂單已送出！")
-
-with col2:
-    if st.button("刪除"):
-        st.warning("暫存已刪除")
-
 # -------- MENU 資料 --------
 MENU = {
     "特價綜合雞蛋糕": 70,
