@@ -8,12 +8,14 @@ import hashlib
 from dateutil import parser
 
 # -------- CSS --------
+import streamlit as st
+
 st.markdown("""
     <style>
     .center {text-align: center !important;}
     .stButton>button {
-        width: 100%;         /* 讓按鈕填滿欄位 */
         margin-top: 10px;
+        width: 100%; /* 保持按鈕在單欄時填滿寬度 */
     }
     .stTabs [role="tablist"] {
         justify-content: center;
@@ -22,9 +24,29 @@ st.markdown("""
         font-weight: bold;
         font-size: 18px;
     }
+
+    /* 針對小螢幕調整按鈕的寬度，使其不會過於擁擠 */
+    @media (max-width: 600px) {
+        .stButton>button {
+            width: 100%;
+        }
+    }
     </style>
 """, unsafe_allow_html=True)
 
+# 使用 st.columns 來並排放置 "確認新增" 和 "直接送出" 按鈕
+col1_top, col2_top = st.columns(2)
+with col1_top:
+    st.button("確認新增")
+with col2_top:
+    st.button("直接送出")
+
+# 使用 st.columns 來並排放置 "刪除暫存" 和 "送出" 按鈕
+col1_bottom, col2_bottom = st.columns(2)
+with col1_bottom:
+    st.button("刪除暫存")
+with col2_bottom:
+    st.button("送出")
 # -------- MENU 資料 --------
 MENU = {
     "特價綜合雞蛋糕": 70,
