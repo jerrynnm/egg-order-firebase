@@ -8,7 +8,7 @@ import hashlib
 from dateutil import parser
 
 # -------- CSS --------
-    st.subheader("暫存訂單顯示區")
+st.subheader("暫存訂單顯示區")
     for i, o in enumerate(st.session_state.temp_order):
         st.write(f"{i+1}. {o['text']} (${o['price']})")
 
