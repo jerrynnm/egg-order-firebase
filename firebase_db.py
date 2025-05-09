@@ -55,11 +55,30 @@ def fetch_orders(status="未完成"):
         print("[ERROR] 讀取 Firebase 訂單失敗：", e)
         return []
 
-def update_order_content(order_id, new_content):
+def update_completed_items(order_id, new_items, new_amount):
     try:
-        db.child("orders").child(order_id).update({"品項內容": new_content})
+        order_ref = db.child("orders").child(order_id)
+        existing = order_ref.get().val()
+
+        # 取得舊資料內容
+        old_items = existing.get("品項內容", [])
+        if not isinstance(old_items, list):
+            old_items = [old_items]
+
+        old_amount = existing.get("金額", 0)
+        updated_items = old_items + new_items
+        updated_amount = old_amount + new_amount
+
+        # 寫回 Firebase
+        order_ref.update({
+            "品項內容": updated_items,
+            "金額": updated_amount,
+            "狀態": "完成"  # 確保狀態也更新
+        })
+
     except Exception as e:
         print_error_and_exit(e)
+
 
 def mark_order_done(order_id):
     try:
