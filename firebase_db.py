@@ -31,6 +31,7 @@ def print_error_and_exit(e):
     print("詳細錯誤訊息：", e)
     sys.exit(1)
 
+# 新增訂單
 def append_order(order_id, content, price, status, note):
     data = {
         "訂單編號": order_id,
@@ -45,6 +46,7 @@ def append_order(order_id, content, price, status, note):
     except Exception as e:
         print_error_and_exit(e)
 
+# 根據狀態抓取訂單
 def fetch_orders(status="未完成"):
     try:
         all_data = db.child("orders").get().val()
@@ -55,32 +57,7 @@ def fetch_orders(status="未完成"):
         print("[ERROR] 讀取 Firebase 訂單失敗：", e)
         return []
 
-# ✅ 更新完成品項並累加金額
-def update_completed_items(order_id, new_items, new_amount):
-    try:
-        order_ref = db.child("orders").child(order_id)
-        existing = order_ref.get().val()
-
-        old_items = existing.get("品項內容", [])
-        if not isinstance(old_items, list):
-            old_items = [old_items]
-
-        old_amount = existing.get("金額", 0)
-        updated_items = old_items + new_items
-        updated_amount = old_amount + new_amount
-
-        order_ref.update({
-            "品項內容": updated_items,
-            "金額": updated_amount
-            # ⛔ 不自動改為完成，由 app.py 視剩餘品項決定
-        })
-    except Exception as e:
-        print_error_and_exit(e)
-
-
-
-
-# ✅ 更新品項內容與金額（例如：同步補全原始訂單內容）
+# 更新訂單品項內容與金額
 def update_order_content(order_id, new_items, new_amount):
     try:
         db.child("orders").child(order_id).update({
@@ -90,17 +67,7 @@ def update_order_content(order_id, new_items, new_amount):
     except Exception as e:
         print_error_and_exit(e)
 
-# ✅ 累加完成項目與金額（專屬完成流程）
-def update_order_content(order_id, new_items, new_amount):
-    try:
-        db.child("orders").child(order_id).update({
-            "品項內容": new_items,
-            "金額": new_amount
-        })
-    except Exception as e:
-        print_error_and_exit(e)
-
-# ✅ 累加完成項目與金額（專屬完成流程）
+# 更新完成項目與金額（累加）
 def update_completed_items(order_id, new_items, new_amount):
     try:
         order_ref = db.child("orders").child(order_id)
@@ -118,9 +85,22 @@ def update_completed_items(order_id, new_items, new_amount):
         order_ref.update({
             "completed_items": updated_completed,
             "金額": updated_amount
-            # 狀態不一定改為完成，讓 app.py 控制
         })
     except Exception as e:
         print_error_and_exit(e)
 
+# 標記訂單為完成狀態
+def mark_order_done(order_id):
+    try:
+        db.child("orders").child(order_id).update({
+            "狀態": "完成"
+        })
+    except Exception as e:
+        print_error_and_exit(e)
 
+# 刪除訂單
+def delete_order_by_id(order_id):
+    try:
+        db.child("orders").child(order_id).remove()
+    except Exception as e:
+        print_error_and_exit(e)
