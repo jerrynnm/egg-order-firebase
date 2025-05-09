@@ -164,7 +164,6 @@ with tabs[1]:
             with col1:
                 if st.button("✅ 完成", key=f"done_{order['訂單編號']}"):
                     if checked:
-                        # 根據品項內容估算金額
                         def estimate_price(text):
                             for k in MENU:
                                 if text.startswith(k):
@@ -173,21 +172,23 @@ with tabs[1]:
                                         qty = int(match.group(1)) if match else 1
                                         return MENU[k] * qty
                                     return MENU[k]
-                            return 50  # fallback default
+                            return 50
 
                         completed_price = sum(estimate_price(i) for i in checked)
 
-                        # 累加完成項目到 Firebase
+                        # 更新 completed_items 欄位
                         updated_items = completed_items + checked
-                        fdb.update_completed_items(order['訂單編號'], checked, completed_price)
+                        fdb.update_completed_items(order['訂單編號'], updated_items)
 
-                        # 移除已完成項目
+                        # 加總金額並同步品項內容
+                        old_content = order["品項內容"] if isinstance(order["品項內容"], list) else [order["品項內容"]]
+                        new_content = old_content + checked
+                        new_amount = order.get("金額", 0) + completed_price
+                        fdb.update_order_content(order['訂單編號'], new_content, new_amount)
+
+                        # 如果所有品項都完成了，就標記為完成
                         new_remaining = [item for item in remaining_items if item not in checked]
-                        if new_remaining:
-                            fdb.update_completed_items(order['訂單編號'], new_remaining, new_amount)
-                            fdb.update_completed_items(order['訂單編號'], updated_items, 0)  # 同步 completed_items 欄位
-                        else:
-                            fdb.update_completed_items(order['訂單編號'], updated_items, 0)
+                        if not new_remaining:
                             fdb.mark_order_done(order['訂單編號'])
                     else:
                         fdb.mark_order_done(order['訂單編號'])
@@ -199,8 +200,6 @@ with tabs[1]:
                     st.rerun()
     else:
         st.info("目前沒有未完成訂單。")
-
-
 # -------- 完成訂單頁 --------
 with tabs[2]:
     st.title("完成訂單")
