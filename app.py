@@ -234,20 +234,25 @@ with tabs[2]:
     finished_orders = fdb.fetch_orders("完成")
     finished_orders = sorted(finished_orders, key=lambda x: x.get("timestamp", 0))
 
-    total = sum(o['金額'] for o in finished_orders) if finished_orders else 0
+    total = sum(o.get('金額', 0) for o in finished_orders)
     st.subheader(f"總營業額：${total}")
 
     if finished_orders:
         for order in finished_orders:
-            st.markdown(f"#### 訂單 {order['訂單編號']}（金額: ${order['金額']}）")
+            st.markdown(f"#### 訂單 {order.get('訂單編號', '未知')}（金額: ${order.get('金額', 0)}）")
 
-            # ✅ 顯示 completed_items（正確分批累加品項）
-            content = order.get('completed_items', [])
-            for item in content:
-                st.text(item)
+            # ✅ 顯示「品項內容」（原始品項 + 分批完成的品項）
+            content = order.get('品項內容') or order.get('completed_items') or []
+            if isinstance(content, list):
+                for item in content:
+                    st.text(item)
+            elif isinstance(content, str):
+                for item in content.split("\n"):
+                    st.text(item)
+            else:
+                st.caption("⚠️ 無品項內容")
 
             if order.get("備註"):
                 st.caption(f"備註：{order['備註']}")
     else:
         st.info("尚無完成訂單。")
-
