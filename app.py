@@ -8,33 +8,36 @@ import hashlib
 from dateutil import parser
 
 # -------- CSS --------
-st.subheader("暫存訂單顯示區")
-
-# 調整按鈕寬度樣式（讓它不撐滿）
 st.markdown("""
     <style>
-    .stButton > button {
-        width: auto;
+    .custom-btn-group {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: nowrap;
+    }
+    .custom-btn-group .stButton {
+        flex: 1;
         min-width: 100px;
-        padding: 0.5em 1em;
-        font-size: 16px;
-        margin-top: 10px;
     }
     </style>
 """, unsafe_allow_html=True)
+st.markdown('<div class="custom-btn-group">', unsafe_allow_html=True)
 
 col1, col2 = st.columns(2)
 
 with col1:
-    if st.button("刪除暫存", key="delete_temp"):
+    if st.button("刪除暫存", key="delete_temp_grouped"):
         if st.session_state.temp_order:
             st.session_state.temp_order.pop()
             st.success("✅ 已刪除最後一筆暫存")
 
 with col2:
-    if st.button("送出", key="send_temp_order"):
+    if st.button("送出", key="send_temp_order_grouped"):
         if st.session_state.temp_order:
             send_temp_order_directly()
+
+st.markdown('</div>', unsafe_allow_html=True)
 
 
 
