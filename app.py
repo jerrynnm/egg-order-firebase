@@ -233,16 +233,19 @@ with tabs[2]:
 
     # 取得所有訂單（不限狀態）
     all_orders = fdb.fetch_orders(status=None)
+    st.write("DEBUG", all_orders)  # 除錯用，完成後可刪
 
-    # 合併同一訂單編號的 completed_items 與金額
+    # 只要「狀態=完成」或「completed_items 非空」就顯示
     merged_orders = {}
     for order in all_orders:
         order_id = order.get("訂單編號")
         if not order_id:
             continue
 
+        # 只要狀態=完成，或 completed_items 有內容就顯示
         completed = order.get("completed_items", [])
-        if not completed:
+        is_completed = order.get("狀態") == "完成" or (completed and len(completed) > 0)
+        if not is_completed:
             continue
 
         if order_id not in merged_orders:
@@ -254,7 +257,16 @@ with tabs[2]:
                 "timestamp": order.get("timestamp", 0)
             }
 
-        merged_orders[order_id]["completed_items"].extend(completed)
+        # 如果 completed_items 有內容就合併
+        if completed:
+            merged_orders[order_id]["completed_items"].extend(completed)
+        # 如果狀態=完成但 completed_items 沒內容，則顯示品項內容
+        elif order.get("狀態") == "完成":
+            content = order.get("品項內容", [])
+            if isinstance(content, str):
+                content = [content]
+            merged_orders[order_id]["completed_items"].extend(content)
+
         merged_orders[order_id]["金額"] += order.get("金額", 0)
 
         # 更新最新完成時間
