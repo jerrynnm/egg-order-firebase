@@ -8,24 +8,29 @@ import hashlib
 from dateutil import parser
 
 # -------- CSS --------
-    col1, col2 = st.columns([1, 1])
-    with col1:
-        if st.button("刪除暫存", key="delete_temp_fixed"):
-            if st.session_state.temp_order:
-                st.session_state.temp_order.pop()
-                st.success("✅ 已刪除最後一筆暫存")
+st.markdown("""
+    <style>
+    .center {text-align: center !important;}
 
-    with col2:
-        if st.button("送出", key="send_temp_fixed"):
-            if st.session_state.temp_order:
-                order_id = str(int(time.time() * 1000))[-8:]
-                content_list = [o['text'] for o in st.session_state.temp_order]
-                total_price = sum(o['price'] for o in st.session_state.temp_order)
-                combined_note = ' / '.join([o.get('note', '') for o in st.session_state.temp_order if o.get('note')])
-                fdb.append_order(order_id, content_list, total_price, "未完成", combined_note)
-                st.session_state.temp_order.clear()
-                st.success("✅ 訂單已送出！")
+    /* ✅ 改這裡：將按鈕寬度從 10% 起跳，而非 100% */
+    .stButton>button {
+        width: 10%;
+        min-width: 100px;  /* 防止過小 */
+        margin-top: 10px;
+        padding: 0.5em 1em;
+        font-size: 16px;
+    }
 
+    .stTabs [role="tablist"] {
+        justify-content: center;
+    }
+
+    .stTabs [role="tab"] {
+        font-weight: bold;
+        font-size: 18px;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 # -------- MENU 資料 --------
 MENU = {
