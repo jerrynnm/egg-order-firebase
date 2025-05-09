@@ -55,6 +55,8 @@ def fetch_orders(status="未完成"):
         print("[ERROR] 讀取 Firebase 訂單失敗：", e)
         return []
 
+# ✅ 修正後：更新已完成品項 + 金額
+
 def update_completed_items(order_id, new_items, new_amount):
     try:
         order_ref = db.child("orders").child(order_id)
@@ -80,7 +82,6 @@ def update_completed_items(order_id, new_items, new_amount):
     except Exception as e:
         print_error_and_exit(e)
 
-
 def mark_order_done(order_id):
     try:
         db.child("orders").child(order_id).update({"狀態": "完成"})
@@ -93,10 +94,3 @@ def delete_order_by_id(order_id, status=None):
     except Exception as e:
         print_error_and_exit(e)
 
-# ✅ 新增：更新已完成品項欄位
-
-def update_completed_items(order_id, completed_items):
-    try:
-        db.child("orders").child(order_id).update({"completed_items": completed_items})
-    except Exception as e:
-        print_error_and_exit(e)
