@@ -8,23 +8,6 @@ import hashlib
 from dateutil import parser
 
 # -------- CSS --------
-with tabs[0]:
-    st.subheader("暫存訂單顯示區")
-
-    for i, o in enumerate(st.session_state.temp_order):
-        st.write(f"{i+1}. {o['text']} (${o['price']})")
-
-    st.markdown("""
-        <style>
-        .stButton > button {
-            width: auto;
-            min-width: 120px;
-            padding: 0.5em 1em;
-            font-size: 16px;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-
     col1, col2 = st.columns([1, 1])
     with col1:
         if st.button("刪除暫存", key="delete_temp_fixed"):
