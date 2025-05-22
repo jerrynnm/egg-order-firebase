@@ -8,18 +8,12 @@ import hashlib
 from dateutil import parser
 
 # -------- CSS --------
-import streamlit as st
-
-# 注入修改後的 CSS 樣式
 st.markdown("""
     <style>
     .center {text-align: center !important;}
     .stButton>button {
         width: 100%;         /* 讓按鈕填滿欄位 */
         margin-top: 10px;
-    }
-    .stButton {
-        padding: 0 5px; /* 調整按鈕的左右間距 */
     }
     .stTabs [role="tablist"] {
         justify-content: center;
@@ -30,24 +24,6 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
-
-# 標題
-st.title("新增：原味雞丝")
-
-# 使用 st.columns 創建 5 個欄位
-col1, col2, col3, col4, col5 = st.columns(5)
-
-# 將每個按鈕放入一個欄位
-with col1:
-    st.button("直接送出")
-with col2:
-    st.button("確認新增")
-with col3:
-    st.button("暫存訂單顯示區")
-with col4:
-    st.button("送出")
-with col5:
-    st.button("刪除暫存")
 # -------- MENU 資料 --------
 MENU = {
     "特價綜合雞蛋糕": 70,
