@@ -8,22 +8,39 @@ import hashlib
 from dateutil import parser
 
 # -------- CSS --------
+import streamlit as st
+
+# 注入自訂 CSS
 st.markdown("""
     <style>
-    .center {text-align: center !important;}
-    .stButton>button {
-        width: 100%;         /* 讓按鈕填滿欄位 */
-        margin-top: 10px;
-    }
-    .stTabs [role="tablist"] {
+    .button-row {
+        display: flex;
+        flex-direction: row;
+        gap: 10px; /* 按鈕之間的間距 */
         justify-content: center;
     }
-    .stTabs [role="tab"] {
-        font-weight: bold;
-        font-size: 18px;
+    .button-row button {
+        width: auto;
+        min-width: 120px;
+        padding: 6px 12px;
+        font-size: 14px;
+    }
+    @media (max-width: 600px) {
+        .button-row {
+            flex-wrap: nowrap; /* 手機上保持水平 */
+        }
     }
     </style>
 """, unsafe_allow_html=True)
+
+# 假設這是你的按鈕部分
+with st.container():
+    st.markdown('<div class="button-row">', unsafe_allow_html=True)
+    if st.button("直接送出"):
+        st.write("直接送出被點擊")
+    if st.button("確認新增"):
+        st.write("確認新增被點擊")
+    st.markdown('</div>', unsafe_allow_html=True)
 # -------- MENU 資料 --------
 MENU = {
     "特價綜合雞蛋糕": 70,
