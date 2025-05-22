@@ -14,6 +14,8 @@ st.markdown("""
     .stButton>button {
         width: 100%;         /* 讓按鈕填滿欄位 */
         margin-top: 10px;
+        padding: 8px 16px;   /* 調整按鈕內邊距 */
+        font-size: 16px;     /* 確保按鈕文字大小適中 */
     }
     .stTabs [role="tablist"] {
         justify-content: center;
@@ -21,6 +23,28 @@ st.markdown("""
     .stTabs [role="tab"] {
         font-weight: bold;
         font-size: 18px;
+    }
+    /* 確保 st.columns 在手機畫面上保持水平排列 */
+    div[data-testid="column"] {
+        display: inline-block !important;
+        width: auto !important;
+        margin-right: 10px; /* 欄位之間的間距 */
+    }
+    /* 針對手機螢幕調整按鈕樣式 */
+    @media (max-width: 600px) {
+        .stButton>button {
+            width: auto; /* 按鈕寬度自適應內容 */
+            min-width: 120px; /* 確保按鈕有最小寬度 */
+            font-size: 14px; /* 手機上縮小文字 */
+            padding: 6px 12px; /* 縮小按鈕內邊距 */
+        }
+        /* 確保欄位容器允許水平排列 */
+        div[data-testid="stHorizontalBlock"] {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            justify-content: center !important;
+            gap: 10px; /* 欄位之間的間距 */
+        }
     }
     </style>
 """, unsafe_allow_html=True)
