@@ -1,13 +1,15 @@
 import streamlit as st
 import time
 import re
+import json
+import hashlib
 import firebase_db as fdb
 from datetime import datetime, date
 
-# ====== 先在檔案最上方（或出現按鈕前）引入以下 CSS：mobile-first、flex-nowrap 強制「不換行」 ======
+# ====== 全局 CSS：mobile-first，強制按鈕不換行 ======
 st.markdown("""
 <style>
-/* ===== 全局：分頁置中 ===== */
+/* 分頁標籤置中、字體加粗加大 */
 .stTabs [role="tablist"] {
   justify-content: center !important;
 }
@@ -16,20 +18,22 @@ st.markdown("""
   font-size: 18px;
 }
 
-/* ===== .center：置中 ===== */
+/* .center：置中用 */
 .center {
   text-align: center !important;
 }
 
-/* ===== 強制兩顆按鈕永遠並排、不換行 ===== */
+/* 強制「永遠並排、不換行」的 flex container */
 .order-btn-row {
   display: flex;
-  flex-wrap: nowrap;          /* 不換行 */
+  flex-wrap: nowrap;       /* 不換行 */
   justify-content: center;
+  align-items: center;
   gap: 10px;
-  margin: 8px 0;
+  margin-top: 8px;
+  margin-bottom: 8px;
 }
-/* ===== HTML 按鈕樣式：手機優先 ===== */
+/* HTML 按鈕樣式：手機優先 */
 .order-btn {
   background-color: #ff4b4b;
   color: white;
@@ -41,7 +45,7 @@ st.markdown("""
   min-width: 80px;
   box-shadow: 1px 2px 6px rgba(0,0,0,0.2);
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s ease-in-out;
 }
 .order-btn.delete {
   background-color: #888888;
@@ -50,14 +54,14 @@ st.markdown("""
   opacity: 0.9;
 }
 
-/* ===== 在較大螢幕（≥600px）時，自動放大按鈕大小 ===== */
+/* 桌機／平板 (≥600px) 時放大按鈕 */
 @media (min-width: 600px) {
   .order-btn {
-    font-size: 14px;
-    padding: 8px 20px;
-    min-width: 100px;
-    border-radius: 25px;
-    box-shadow: 1px 2px 8px rgba(0,0,0,0.2);
+    font-size: 14px !important;
+    padding: 8px 20px !important;
+    border-radius: 25px !important;
+    min-width: 100px !important;
+    box-shadow: 1px 2px 8px rgba(0,0,0,0.2) !important;
   }
   .order-btn-row {
     gap: 14px;
@@ -65,7 +69,7 @@ st.markdown("""
   }
 }
 
-/* ===== 其他 st.button（若有留用）一律佔滿容器寬度 ===== */
+/* 如果有其他原生 st.button 想撐滿，可保留下面 */
 .stButton > button {
   width: 100% !important;
   margin-top: 6px;
@@ -74,7 +78,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# ====== MENU、Session State 初始化、輔助函式  (保持你原本的) ======
+# ====== MENU 資料 ======
 MENU = {
     "特價綜合雞蛋糕": 70,
     "內餡雞蛋糕": 50,
@@ -82,6 +86,7 @@ MENU = {
 }
 FLAVORS = ["拉絲起司", "奧利奧 Oreo", "黑糖麻糬"]
 
+# ====== 初始化 Session State ======
 if 'temp_order' not in st.session_state:
     st.session_state.temp_order = []
 if 'show_popup' not in st.session_state:
@@ -89,6 +94,7 @@ if 'show_popup' not in st.session_state:
 if 'success_message' not in st.session_state:
     st.session_state.success_message = None
 
+# ====== 幫助函式 ======
 def estimate_price(item_text):
     if item_text.startswith("原味雞蛋糕"):
         match = re.search(r"x(\d+)", item_text)
@@ -96,7 +102,9 @@ def estimate_price(item_text):
     return MENU["內餡雞蛋糕"]
 
 def send_temp_order_directly():
-    # 送出邏輯：寫入 Firebase、清空暫存、顯示成功訊息
+    """
+    寫入 Firebase、清空暫存、顯示成功訊息
+    """
     order_id = str(int(time.time() * 1000))[-8:]
     content_list = [o['text'] for o in st.session_state.temp_order]
     total_price = sum(o['price'] for o in st.session_state.temp_order)
@@ -107,27 +115,27 @@ def send_temp_order_directly():
     st.session_state.show_popup = False
     st.session_state.success_message = "✅ 訂單已送出！"
 
-
-# ====== 建立三分頁 ======
+# ====== 分頁 ======
 tabs = st.tabs(["暫存", "未完成", "完成"])
+
 
 # ====== 第一頁：「暫存」 ======
 with tabs[0]:
     st.markdown('<div class="center">', unsafe_allow_html=True)
     st.title("選擇餐點")
 
-    # 显示成功訊息
+    # 顯示送出成功訊息
     if st.session_state.get("success_message"):
         st.success(st.session_state.success_message)
         st.session_state.success_message = None
 
-    # 1. 菜單按鈕 → 放到暫存區
+    # 1. 菜單按鈕 → 開啟彈窗
     for item in MENU:
         if st.button(item, key=f"menu_button_{item}"):
             st.session_state.selected_item = item
             st.session_state.show_popup = True
 
-    # 2. 彈出「新增餐點」視窗
+    # 2. 彈出「新增」視窗
     if st.session_state.get("show_popup", False):
         item = st.session_state['selected_item']
         st.subheader(f"新增: {item}")
@@ -213,7 +221,7 @@ with tabs[0]:
                         st.session_state.show_popup = True
                         st.rerun()
 
-    # 3. 列出暫存訂單內容
+    # 3. 列出暫存訂單清單
     st.subheader("暫存訂單顯示區")
     if st.session_state.temp_order:
         for i, o in enumerate(st.session_state.temp_order):
@@ -222,45 +230,93 @@ with tabs[0]:
         st.info("目前沒有暫存訂單。")
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # ====== 4. 兩顆「隱藏版」 st.button，用來接收 JavaScript click 事件，執行實際送出／刪除邏輯 ======
+    # 4. 隱藏版 st.button：綁定真正的送出 / 刪除邏輯
     if 'btn_send_hidden' not in st.session_state:
         st.session_state.btn_send_hidden = False
     if 'btn_del_hidden' not in st.session_state:
         st.session_state.btn_del_hidden = False
 
     st.button(
-        "", 
-        key="btn_send_hidden", 
-        help="", 
+        "",
+        key="btn_send_hidden",
         on_click=send_temp_order_directly
     )
     st.button(
-        "", 
-        key="btn_del_hidden", 
-        help="", 
+        "",
+        key="btn_del_hidden",
         on_click=lambda: st.session_state.temp_order.pop() if st.session_state.temp_order else None
     )
 
-    # ====== 5. 真正顯示給使用者的「紅色送出／灰色刪除」HTML 按鈕 ======
+    # 5. 真正顯示給使用者看的「紅色送出／灰色刪除暫存」按鈕 (內聯 CSS，強制不換行)
     st.markdown("""
-    <div class="order-btn-row">
-      <button class="order-btn"
-        onclick="document.querySelector('[data-baseweb=\\"button\\"][data-key=\\"btn_send_hidden\\"]').click();">
+    <div style="
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        margin-top: 8px;
+        margin-bottom: 8px;
+    ">
+      <!-- 紅色「送出」按鈕 -->
+      <button onclick="document.querySelector('[data-baseweb=\\"button\\"][data-key=\\"btn_send_hidden\\"]').click();" 
+              style="
+                background-color: #ff4b4b;
+                color: white;
+                border: none;
+                border-radius: 20px;
+                font-size: 12px;
+                font-weight: bold;
+                padding: 6px 16px;
+                min-width: 80px;
+                box-shadow: 1px 2px 6px rgba(0,0,0,0.2);
+                cursor: pointer;
+                transition: opacity 0.2s ease-in-out;
+              ">
         🚀 送出
       </button>
-      <button class="order-btn delete"
-        onclick="document.querySelector('[data-baseweb=\\"button\\"][data-key=\\"btn_del_hidden\\"]').click();">
+
+      <!-- 灰色「刪除暫存」按鈕 -->
+      <button onclick="document.querySelector('[data-baseweb=\\"button\\"][data-key=\\"btn_del_hidden\\"]').click();" 
+              style="
+                background-color: #888888;
+                color: white;
+                border: none;
+                border-radius: 20px;
+                font-size: 12px;
+                font-weight: bold;
+                padding: 6px 16px;
+                min-width: 80px;
+                box-shadow: 1px 2px 6px rgba(0,0,0,0.2);
+                cursor: pointer;
+                transition: opacity 0.2s ease-in-out;
+              ">
         🗑️ 刪除暫存
       </button>
     </div>
     """, unsafe_allow_html=True)
+
+    # 6. Media Query：螢幕 ≥600px 時，按鈕放大
+    st.markdown("""
+    <style>
+    @media (min-width: 600px) {
+      div[style*="flex-wrap: nowrap"] > button {
+        font-size: 14px !important;
+        padding: 8px 20px !important;
+        border-radius: 25px !important;
+        min-width: 100px !important;
+        box-shadow: 1px 2px 8px rgba(0,0,0,0.2) !important;
+      }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 
 # ====== 第二頁：「未完成」 ======
 with tabs[1]:
     st.title("未完成訂單")
     try:
         unfinished_orders = fdb.fetch_orders("未完成")
-        # 計算 hash 看是否要 rerun
         raw_data = json.dumps(unfinished_orders, sort_keys=True, ensure_ascii=False)
         current_hash = hashlib.md5(raw_data.encode("utf-8")).hexdigest()
         if "last_unfinished_hash" not in st.session_state:
@@ -273,7 +329,7 @@ with tabs[1]:
             for order in unfinished_orders:
                 try:
                     if not all(key in order for key in ['訂單編號', '金額', '品項內容']):
-                        st.error(f"訂單資料不完整: {order.get('訂單編號', '未知')}")
+                        st.error(f"訂單資料不完整: {order.get('訂單編號','未知')}")
                         continue
 
                     st.subheader(f"訂單 {order['訂單編號']}（金額: ${order['金額']}）")
@@ -281,14 +337,13 @@ with tabs[1]:
                     completed_items = order.get("completed_items", [])
                     remaining_items = [it for it in item_list if it not in completed_items]
 
-                    # 每筆未完成品項用 checkbox
+                    # 勾選尚未完成的品項
                     for i, it in enumerate(remaining_items):
                         key_cb = f"{order['訂單編號']}_cb_{i}"
                         if key_cb not in st.session_state:
                             st.session_state[key_cb] = False
                         checked = st.checkbox(f"\U0001F7E0 {it}", key=key_cb)
                         if checked:
-                            # 把它暫時標記到一個暫存 list，待按下「完成」才一併處理
                             if 'to_complete' not in st.session_state:
                                 st.session_state.to_complete = {}
                             if order['訂單編號'] not in st.session_state.to_complete:
@@ -303,11 +358,9 @@ with tabs[1]:
                             try:
                                 checked = st.session_state.to_complete.get(order['訂單編號'], [])
                                 if checked:
-                                    # 計算該訂單裡面勾選品項的價格
                                     completed_price = sum(estimate_price(i) for i in checked)
                                     fdb.update_completed_items(order['訂單編號'], checked, completed_price)
 
-                                    # 如果還有剩下未完成的，更新內容；否則標記整筆訂單完成
                                     new_remaining = [it for it in remaining_items if it not in checked]
                                     if new_remaining:
                                         fdb.update_order_content(order['訂單編號'], new_remaining, order['金額'])
@@ -319,7 +372,7 @@ with tabs[1]:
                                 st.success("訂單更新成功！")
                                 st.rerun()
                             except Exception as e:
-                                st.error(f"更新訂單時發生錯誤: {str(e)}")
+                                st.error(f"更新訂單時出錯: {str(e)}")
                     with col2:
                         if st.button("🗑️ 刪除", key=f"del_{order['訂單編號']}"):
                             try:
@@ -341,7 +394,7 @@ with tabs[1]:
 with tabs[2]:
     st.title("完成訂單")
 
-    # 自動刪除非今天（只留今日完成訂單）
+    # 自動刪除非今天的完成訂單
     all_finished = fdb.fetch_orders("完成")
     today_str = date.today().isoformat()
     for order in all_finished:
@@ -351,7 +404,7 @@ with tabs[2]:
             if order_date != today_str:
                 fdb.delete_order_by_id(order['訂單編號'])
 
-    # 重新讀取並顯示
+    # 重新抓取並顯示
     finished_orders = fdb.fetch_orders("完成")
     finished_orders = sorted(finished_orders, key=lambda x: x.get("timestamp", 0))
     total = sum(o.get('金額', 0) for o in finished_orders)
