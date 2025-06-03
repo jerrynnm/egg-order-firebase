@@ -9,21 +9,44 @@ from dateutil import parser
 
 # -------- CSS --------
 st.markdown("""
-    <style>
-    .center {text-align: center !important;}
-    .stButton>button {
-        width: 100%;         /* 讓按鈕填滿欄位 */
-        margin-top: 10px;
-    }
-    .stTabs [role="tablist"] {
-        justify-content: center;
-    }
-    .stTabs [role="tab"] {
-        font-weight: bold;
-        font-size: 18px;
-    }
-    </style>
+<style>
+.btn-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin: 12px 0 18px 0;
+}
+.my-btn {
+    font-size: 15px;
+    padding: 7px 18px;
+    border-radius: 1.2em;
+    border: none;
+    background: linear-gradient(90deg, #ffe082, #ffd966);
+    color: #a76700;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.12s;
+    box-shadow: 0 2px 8px #ffd96655;
+}
+.my-btn:active {
+    background: #ffd966 !important;
+}
+@media (max-width: 600px) {
+    .my-btn { font-size: 14px; padding: 8px 10px;}
+    .btn-row { gap: 8px; }
+}
+</style>
 """, unsafe_allow_html=True)
+# 用於顯示按鈕
+st.markdown("""
+<div class="btn-row">
+    <form action="" method="post">
+        <button class="my-btn" name="my_action" value="send" type="submit">🚀 送出</button>
+        <button class="my-btn" name="my_action" value="delete" type="submit">🗑️ 刪除暫存</button>
+    </form>
+</div>
+""", unsafe_allow_html=True)
+
 # -------- MENU 資料 --------
 MENU = {
     "特價綜合雞蛋糕": 70,
