@@ -7,70 +7,23 @@ import json
 import hashlib
 from dateutil import parser
 
-# -------- CSS 美化按鈕 --------
-import streamlit as st
-
-# -------- CSS 美化兩顆按鈕 --------
+# -------- CSS --------
 st.markdown("""
-<style>
-.order-btn-row {
-    display: flex;
-    justify-content: center;
-    margin-top: 10px;
-    margin-bottom: 10px;
-    gap: 14px;
-}
-.order-btn {
-    background: #ff4b4b;
-    color: #fff;
-    border: none;
-    border-radius: 25px;
-    font-size: 14px;
-    font-weight: bold;
-    padding: 8px 20px;
-    min-width: 100px;
-    box-shadow: 1px 2px 8px #ccc;
-    transition: background 0.2s;
-}
-.order-btn.delete {
-    background: #888;
-}
-@media (max-width: 600px) {
-    .order-btn-row {
-        gap: 10px;
+    <style>
+    .center {text-align: center !important;}
+    .stButton>button {
+        width: 100%;         /* 讓按鈕填滿欄位 */
+        margin-top: 10px;
     }
-    .order-btn {
-        font-size: 12px;
-        padding: 6px 12px;
-        min-width: 80px;
+    .stTabs [role="tablist"] {
+        justify-content: center;
     }
-}
-</style>
+    .stTabs [role="tab"] {
+        font-weight: bold;
+        font-size: 18px;
+    }
+    </style>
 """, unsafe_allow_html=True)
-
-# -------- 暫存訂單顯示區 --------
-st.subheader("暫存訂單顯示區")
-for i, o in enumerate(st.session_state.temp_order):
-    st.write(f"{i+1}. {o['text']} (${o['price']})")
-
-# -------- 兩顆美化按鈕（橫向） --------
-st.markdown('<div class="order-btn-row">', unsafe_allow_html=True)
-col1, col2 = st.columns(2, gap="small")
-
-with col1:
-    send_click = st.button("🚀 送出", key="send_temp_order", help="送出全部暫存訂單", type="primary")
-with col2:
-    del_click = st.button("🗑️ 刪除暫存", key="delete_temp", help="刪除最後一筆暫存")
-
-st.markdown('</div>', unsafe_allow_html=True)
-
-# -------- 按鈕行為 --------
-if send_click and st.session_state.temp_order:
-    send_temp_order_directly()
-if del_click and st.session_state.temp_order:
-    st.session_state.temp_order.pop()
-
-
 # -------- MENU 資料 --------
 MENU = {
     "特價綜合雞蛋糕": 70,
@@ -93,7 +46,7 @@ def estimate_price(item_text):
     return MENU["內餡雞蛋糕"]
 
 # -------- 分頁 --------
-tabs = st.tabs(["點餐", "製作", "完成"])
+tabs = st.tabs(["暫存", "未完成", "完成"])
 
 # -------- 暫存頁 --------
 with tabs[0]:
