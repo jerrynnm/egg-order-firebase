@@ -7,28 +7,55 @@ import json
 import hashlib
 from dateutil import parser
 
-# -------- CSS --------
 # -------- CSS 美化按鈕 --------
-st.markdown("""
-    <style>
-    .stButton>button {
-        width: auto;
-        min-width: 120px;
-        margin: 5px;
-        border-radius: 20px;
-        padding: 8px 16px;
-        font-size: 16px;
-        font-weight: bold;
-        background-color: #444;
-        color: white;
-        border: 1px solid #888;
-    }
-    .stButton>button:hover {
-        background-color: #666;
-        color: #fff;
-    }
-    </style>
-""", unsafe_allow_html=True)
+# ✅ 最下方「送出 / 刪除暫存」按鈕區塊美化
+    st.subheader("暫存訂單顯示區")
+    for i, o in enumerate(st.session_state.temp_order):
+        st.write(f"{i+1}. {o['text']} (${o['price']})")
+
+    col_del, col_send = st.columns([1, 1])
+
+    with col_del:
+        st.markdown('''
+        <div style="display: flex; justify-content: center;">
+            <button onclick="document.getElementById('send_temp_order_btn').click();" style="
+                background-color:#ff4b4b;
+                border:none;
+                border-radius:25px;
+                color:white;
+                padding:8px 16px;
+                font-size:15px;
+                font-weight:bold;
+                margin:5px;">
+                🚀 送出
+            </button>
+        </div>
+        ''', unsafe_allow_html=True)
+        if st.button("", key="send_temp_order_btn"):
+            if st.session_state.temp_order:
+                send_temp_order_directly()
+
+    with col_send:
+        st.markdown('''
+        <div style="display: flex; justify-content: center;">
+            <button onclick="document.getElementById('delete_temp_btn').click();" style="
+                background-color:#888;
+                border:none;
+                border-radius:25px;
+                color:white;
+                padding:8px 16px;
+                font-size:15px;
+                font-weight:bold;
+                margin:5px;">
+                🗑️ 刪除暫存
+            </button>
+        </div>
+        ''', unsafe_allow_html=True)
+        if st.button("", key="delete_temp_btn"):
+            if st.session_state.temp_order:
+                st.session_state.temp_order.pop()
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
 # -------- MENU 資料 --------
@@ -53,7 +80,7 @@ def estimate_price(item_text):
     return MENU["內餡雞蛋糕"]
 
 # -------- 分頁 --------
-tabs = st.tabs(["暫存", "未完成", "完成"])
+tabs = st.tabs(["點餐", "製作", "完成"])
 
 # -------- 暫存頁 --------
 with tabs[0]:
