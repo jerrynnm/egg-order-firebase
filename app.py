@@ -8,70 +8,34 @@ import hashlib
 from dateutil import parser
 
 # -------- CSS --------
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>響應式水平按鈕</title>
-    <style>
-        .btn-row {
-            display: flex;
-            gap: 12px;
-            justify-content: center; /* 水平置中 */
-            align-items: center; /* 垂直置中 */
-            margin: 12px 0 18px 0;
-            flex-wrap: wrap; /* 允許按鈕在極窄螢幕上換行 */
-        }
-        .my-btn {
-            font-size: 15px;
-            padding: 7px 18px;
-            border-radius: 1.2em;
-            border: none;
-            background: linear-gradient(90deg, #ffe082, #ffd966);
-            color: #a76700;
-            font-weight: 700;
-            cursor: pointer;
-            transition: background 0.12s, transform 0.1s;
-            box-shadow: 0 2px 8px #ffd96655;
-            white-space: nowrap; /* 防止文字換行 */
-        }
-        .my-btn:hover {
-            background: linear-gradient(90deg, #ffeca2, #ffe082);
-        }
-        .my-btn:active {
-            background: #ffd966 !important;
-            transform: scale(0.95);
-        }
-        @media (max-width: 600px) {
-            .btn-row {
-                gap: 8px;
-                justify-content: center; /* 手機端保持水平置中 */
-            }
-            .my-btn {
-                font-size: 14px;
-                padding: 8px 16px;
-                min-width: 120px; /* 確保按鈕有最小寬度 */
-            }
-        }
-        @media (max-width: 400px) {
-            .my-btn {
-                font-size: 13px;
-                padding: 6px 12px;
-                min-width: 100px; /* 超小螢幕進一步縮減 */
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="btn-row">
-        <form action="" method="post">
-            <button class="my-btn" name="my_action" value="send" type="submit">🚀 送出</button>
-            <button class="my-btn" name="my_action" value="delete" type="submit">🗑️ 刪除暫存</button>
-        </form>
-    </div>
-</body>
-</html>
+st.markdown("""
+<style>
+.row-btns { display: flex; gap: 14px; justify-content: center; margin-bottom:10px;}
+.row-btns .stButton>button { 
+    font-size: 15px !important; 
+    padding: 6px 18px !important;
+    border-radius: 1.5em;
+}
+@media (max-width: 600px) {
+    .row-btns .stButton>button { font-size: 14px !important; padding: 7px 10px !important;}
+    .row-btns { gap: 8px; }
+}
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown('<div class="row-btns">', unsafe_allow_html=True)
+col1, col2 = st.columns(2, gap="small")
+with col1:
+    send = st.button("🚀 送出")
+with col2:
+    delete = st.button("🗑️ 刪除暫存")
+st.markdown('</div>', unsafe_allow_html=True)
+
+if send:
+    st.success("已送出")
+if delete:
+    st.warning("已刪除")
+
 # -------- MENU 資料 --------
 MENU = {
     "特價綜合雞蛋糕": 70,
