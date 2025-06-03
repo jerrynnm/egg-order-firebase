@@ -4,10 +4,10 @@ import re
 import firebase_db as fdb
 from datetime import datetime, date
 
-# ====== 全局 CSS（手機優先） ======
+# ====== 先在檔案最上方（或出現按鈕前）引入以下 CSS：mobile-first、flex-nowrap 強制「不換行」 ======
 st.markdown("""
 <style>
-/* 1. 通用：讓分頁置中、字體醒目 */
+/* ===== 全局：分頁置中 ===== */
 .stTabs [role="tablist"] {
   justify-content: center !important;
 }
@@ -16,20 +16,22 @@ st.markdown("""
   font-size: 18px;
 }
 
-/* 2. .center 類別：置中 */
+/* ===== .center：置中 ===== */
 .center {
   text-align: center !important;
 }
 
-/* 3. 自訂按鈕：mobile-first 設計，預設使用小尺寸 */
+/* ===== 強制兩顆按鈕永遠並排、不換行 ===== */
 .order-btn-row {
   display: flex;
+  flex-wrap: nowrap;          /* 不換行 */
   justify-content: center;
   gap: 10px;
   margin: 8px 0;
 }
+/* ===== HTML 按鈕樣式：手機優先 ===== */
 .order-btn {
-  background: #ff4b4b;
+  background-color: #ff4b4b;
   color: white;
   border: none;
   border-radius: 20px;
@@ -39,16 +41,16 @@ st.markdown("""
   min-width: 80px;
   box-shadow: 1px 2px 6px rgba(0,0,0,0.2);
   cursor: pointer;
-  transition: opacity 0.2s ease-in-out;
+  transition: opacity 0.2s;
 }
 .order-btn.delete {
-  background: #888888;
+  background-color: #888888;
 }
 .order-btn:hover {
   opacity: 0.9;
 }
 
-/* 4. 大於 600px（桌機／平板）時，按鈕放大 */
+/* ===== 在較大螢幕（≥600px）時，自動放大按鈕大小 ===== */
 @media (min-width: 600px) {
   .order-btn {
     font-size: 14px;
@@ -63,8 +65,8 @@ st.markdown("""
   }
 }
 
-/* 5. 確保所有原生 stButton 都撐滿容器（如果需要保留其他原生按鈕） */
-.stButton>button {
+/* ===== 其他 st.button（若有留用）一律佔滿容器寬度 ===== */
+.stButton > button {
   width: 100% !important;
   margin-top: 6px;
 }
@@ -72,7 +74,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# ====== MENU 資料（不變） ======
+# ====== MENU、Session State 初始化、輔助函式  (保持你原本的) ======
 MENU = {
     "特價綜合雞蛋糕": 70,
     "內餡雞蛋糕": 50,
@@ -80,7 +82,6 @@ MENU = {
 }
 FLAVORS = ["拉絲起司", "奧利奧 Oreo", "黑糖麻糬"]
 
-# ====== 初始化 Session State ======
 if 'temp_order' not in st.session_state:
     st.session_state.temp_order = []
 if 'show_popup' not in st.session_state:
@@ -88,8 +89,6 @@ if 'show_popup' not in st.session_state:
 if 'success_message' not in st.session_state:
     st.session_state.success_message = None
 
-
-# ====== 幫助函式 ======
 def estimate_price(item_text):
     if item_text.startswith("原味雞蛋糕"):
         match = re.search(r"x(\d+)", item_text)
@@ -97,9 +96,7 @@ def estimate_price(item_text):
     return MENU["內餡雞蛋糕"]
 
 def send_temp_order_directly():
-    """
-    真正送出整筆暫存：寫入 Firebase、清空暫存、顯示成功訊息
-    """
+    # 送出邏輯：寫入 Firebase、清空暫存、顯示成功訊息
     order_id = str(int(time.time() * 1000))[-8:]
     content_list = [o['text'] for o in st.session_state.temp_order]
     total_price = sum(o['price'] for o in st.session_state.temp_order)
@@ -114,24 +111,23 @@ def send_temp_order_directly():
 # ====== 建立三分頁 ======
 tabs = st.tabs(["暫存", "未完成", "完成"])
 
-
 # ====== 第一頁：「暫存」 ======
 with tabs[0]:
     st.markdown('<div class="center">', unsafe_allow_html=True)
     st.title("選擇餐點")
 
-    # 如果剛剛有送出成功訊息，就顯示
+    # 显示成功訊息
     if st.session_state.get("success_message"):
         st.success(st.session_state.success_message)
         st.session_state.success_message = None
 
-    # 1. 點選菜單按鈕 → 顯示要新增項目的彈窗
+    # 1. 菜單按鈕 → 放到暫存區
     for item in MENU:
         if st.button(item, key=f"menu_button_{item}"):
             st.session_state.selected_item = item
             st.session_state.show_popup = True
 
-    # 2. 彈出「新增」視窗
+    # 2. 彈出「新增餐點」視窗
     if st.session_state.get("show_popup", False):
         item = st.session_state['selected_item']
         st.subheader(f"新增: {item}")
@@ -211,7 +207,6 @@ with tabs[0]:
                             txt += f" - 備註: {note}"
                         st.session_state.temp_order.append({"text": txt, "price": MENU[item], "note": note})
 
-                        # 清空每個 flavor 的 state，避免下次重複
                         for flavor in FLAVORS:
                             st.session_state.pop(f"flavor_{flavor}", None)
 
@@ -227,13 +222,12 @@ with tabs[0]:
         st.info("目前沒有暫存訂單。")
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # 4. 隱藏版的 st.button → 真正負責執行 send / delete 動作
+    # ====== 4. 兩顆「隱藏版」 st.button，用來接收 JavaScript click 事件，執行實際送出／刪除邏輯 ======
     if 'btn_send_hidden' not in st.session_state:
         st.session_state.btn_send_hidden = False
     if 'btn_del_hidden' not in st.session_state:
         st.session_state.btn_del_hidden = False
 
-    # 隱藏按鈕：按下就觸發真正的函式
     st.button(
         "", 
         key="btn_send_hidden", 
@@ -247,20 +241,19 @@ with tabs[0]:
         on_click=lambda: st.session_state.temp_order.pop() if st.session_state.temp_order else None
     )
 
-    # 5. 真正顯示給使用者看的「紅色送出／灰色刪除暫存」HTML 按鈕
+    # ====== 5. 真正顯示給使用者的「紅色送出／灰色刪除」HTML 按鈕 ======
     st.markdown("""
     <div class="order-btn-row">
-      <button class="order-btn" 
+      <button class="order-btn"
         onclick="document.querySelector('[data-baseweb=\\"button\\"][data-key=\\"btn_send_hidden\\"]').click();">
         🚀 送出
       </button>
-      <button class="order-btn delete" 
+      <button class="order-btn delete"
         onclick="document.querySelector('[data-baseweb=\\"button\\"][data-key=\\"btn_del_hidden\\"]').click();">
         🗑️ 刪除暫存
       </button>
     </div>
     """, unsafe_allow_html=True)
-
 
 # ====== 第二頁：「未完成」 ======
 with tabs[1]:
