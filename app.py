@@ -8,23 +8,78 @@ import hashlib
 from dateutil import parser
 
 # -------- CSS --------
+import streamlit as st
+import time
+import datetime
+import re
+import firebase_db as fdb
+import json
+import hashlib
+from dateutil import parser
+
+# -------- 全局 CSS（包含你之前的 .center 以及隱藏按鈕樣式）--------
 st.markdown("""
-    <style>
-    .center {text-align: center !important;}
-    .stButton>button {
-        width: 100%;         /* 讓按鈕填滿欄位 */
-        margin-top: 10px;
+<style>
+  .center {text-align: center !important;}
+
+  /* 調整 Streamlit 原生按鈕讓它寬度撐滿，保留在製作/完成分頁可用 */
+  .stButton>button {
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  /* 分頁列置中、字型加粗加大 */
+  .stTabs [role="tablist"] {
+    justify-content: center;
+  }
+  .stTabs [role="tab"] {
+    font-weight: bold;
+    font-size: 18px;
+  }
+
+  /* 自訂「送出/刪除暫存」HTML 按鈕樣式 */
+  .order-btn-row {
+    display: flex;
+    justify-content: center;
+    margin-top: 12px;
+    margin-bottom: 12px;
+    gap: 14px;
+  }
+  .order-btn {
+    background: #ff4b4b;
+    color: #fff;
+    border: none;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 8px 20px;
+    min-width: 100px;
+    box-shadow: 1px 2px 8px #ccc;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .order-btn.delete {
+    background: #888;
+  }
+  .order-btn:hover {
+    opacity: 0.9;
+  }
+
+  @media (max-width: 600px) {
+    .order-btn-row {
+      gap: 10px;
     }
-    .stTabs [role="tablist"] {
-        justify-content: center;
+    .order-btn {
+      font-size: 12px;
+      padding: 6px 12px;
+      min-width: 80px;
     }
-    .stTabs [role="tab"] {
-        font-weight: bold;
-        font-size: 18px;
-    }
-    </style>
+  }
+</style>
 """, unsafe_allow_html=True)
-# -------- MENU 資料 --------
+
+
+# -------- MENU 資料（你原本的）--------
 MENU = {
     "特價綜合雞蛋糕": 70,
     "內餡雞蛋糕": 50,
@@ -35,9 +90,10 @@ FLAVORS = ["拉絲起司", "奧利奧 Oreo", "黑糖麻糬"]
 # -------- 初始化 --------
 if 'temp_order' not in st.session_state:
     st.session_state.temp_order = []
-
-def expand_order_items(order_items):
-    return [item['text'] for item in order_items]
+if 'show_popup' not in st.session_state:
+    st.session_state.show_popup = False
+if 'success_message' not in st.session_state:
+    st.session_state.success_message = None
 
 def estimate_price(item_text):
     if item_text.startswith("原味雞蛋糕"):
@@ -45,24 +101,28 @@ def estimate_price(item_text):
         return MENU["原味雞蛋糕"] * int(match.group(1)) if match else MENU["原味雞蛋糕"]
     return MENU["內餡雞蛋糕"]
 
+def send_temp_order_directly():
+    # 實務上你會把暫存訂單寫入 Firebase，這裡只示範「清空 + 顯示成功訊息」
+    order_id = str(int(time.time() * 1000))[-8:]
+    content_list = [o['text'] for o in st.session_state.temp_order]
+    total_price = sum(o['price'] for o in st.session_state.temp_order)
+    combined_note = ' / '.join([o.get('note', '') for o in st.session_state.temp_order if o.get('note')])
+    fdb.append_order(order_id, content_list, total_price, "未完成", combined_note)
+
+    st.session_state.temp_order.clear()
+    st.session_state.success_message = "✅ 訂單已送出！"
+    st.session_state.show_popup = False
+
+
 # -------- 分頁 --------
 tabs = st.tabs(["暫存", "未完成", "完成"])
 
-# -------- 暫存頁 --------
+# -------- 暫存頁 (tabs[0]) --------
 with tabs[0]:
     st.markdown('<div class="center">', unsafe_allow_html=True)
     st.title("選擇餐點")
 
-    def send_temp_order_directly():
-        order_id = str(int(time.time() * 1000))[-8:]
-        content_list = [o['text'] for o in st.session_state.temp_order]
-        total_price = sum(o['price'] for o in st.session_state.temp_order)
-        combined_note = ' / '.join([o.get('note', '') for o in st.session_state.temp_order if o.get('note')])
-        fdb.append_order(order_id, content_list, total_price, "未完成", combined_note)
-        st.session_state.temp_order.clear()
-        st.session_state.show_popup = True
-        st.session_state.success_message = "✅ 訂單已送出！"
-
+    # 1. 點「選擇餐點」按鈕，放到暫存區
     if st.session_state.get("success_message"):
         st.success(st.session_state.success_message)
         st.session_state.success_message = None
@@ -72,6 +132,7 @@ with tabs[0]:
             st.session_state.selected_item = item
             st.session_state.show_popup = True
 
+    # 2. 彈出框：原味 vs 其他
     if st.session_state.get('show_popup', False):
         item = st.session_state['selected_item']
         st.subheader(f"新增: {item}")
@@ -88,7 +149,6 @@ with tabs[0]:
                         txt += f" - 備註: {note}"
                     st.session_state.temp_order.append({"text": txt, "price": MENU[item] * qty, "note": note})
                     send_temp_order_directly()
-
             with col2:
                 if st.button("確認新增", key="confirm_plain"):
                     txt = f"{item} x{qty}"
@@ -99,7 +159,10 @@ with tabs[0]:
 
         else:
             flavor_counts = {}
-            current_values = {flavor: st.session_state.get(f"flavor_{flavor}", 0) for flavor in FLAVORS}
+            current_values = {
+                flavor: st.session_state.get(f"flavor_{flavor}", 0)
+                for flavor in FLAVORS
+            }
             total_selected = sum(current_values.values())
             remaining_total = 3 - total_selected
 
@@ -136,7 +199,6 @@ with tabs[0]:
                             txt += f" - 備註: {note}"
                         st.session_state.temp_order.append({"text": txt, "price": MENU[item], "note": note})
                         send_temp_order_directly()
-
             with col2:
                 if st.button("確認新增", key="confirm_filled"):
                     if total_after != 3:
@@ -150,29 +212,54 @@ with tabs[0]:
                             txt += f" - 備註: {note}"
                         st.session_state.temp_order.append({"text": txt, "price": MENU[item], "note": note})
 
+                        # 清除 flavor 狀態，準備下次新增
                         for flavor in FLAVORS:
                             st.session_state.pop(f"flavor_{flavor}", None)
 
                         st.session_state.show_popup = True
                         st.rerun()
 
+    # 3. 顯示暫存訂單清單
     st.subheader("暫存訂單顯示區")
-    for i, o in enumerate(st.session_state.temp_order):
-        st.write(f"{i+1}. {o['text']} (${o['price']})")
-
-    col_del, col_send = st.columns([1, 1])
-    with col_del:
-        if st.button("送出", key="send_temp_order"):
-            if st.session_state.temp_order:
-                send_temp_order_directly()
-
-    with col_send:
-        if st.button("刪除暫存", key="delete_temp"):
-            if st.session_state.temp_order:
-                st.session_state.temp_order.pop()
-
+    if st.session_state.temp_order:
+        for i, o in enumerate(st.session_state.temp_order):
+            st.write(f"{i+1}. {o['text']} (${o['price']})")
+    else:
+        st.info("目前沒有暫存訂單。")
     st.markdown('</div>', unsafe_allow_html=True)
 
+    # 4. 隱藏版 Streamlit 按鈕：實際執行 send / delete
+    #    這兩個按鈕的文字設為空白，不會顯示在畫面上
+    if 'btn_send_hidden' not in st.session_state:
+        st.session_state.btn_send_hidden = False
+    if 'btn_del_hidden' not in st.session_state:
+        st.session_state.btn_del_hidden = False
+
+    # 呼叫隱藏按鈕做實際邏輯
+    send_trigger = st.button(
+        "", 
+        key="btn_send_hidden", 
+        help="", 
+        on_click=send_temp_order_directly
+    )
+    del_trigger = st.button(
+        "", 
+        key="btn_del_hidden", 
+        help="刪除最後一筆暫存", 
+        on_click=lambda: st.session_state.temp_order.pop() if st.session_state.temp_order else None
+    )
+
+    # 5. 真正呈現給使用者的「紅色送出 / 灰色刪除暫存」按鈕 (HTML)
+    st.markdown("""
+    <div class="order-btn-row">
+        <button class="order-btn" onclick="document.querySelector('[data-baseweb=\"button\"][data-key=\"btn_send_hidden\"]').click();">
+            🚀 送出
+        </button>
+        <button class="order-btn delete" onclick="document.querySelector('[data-baseweb=\"button\"][data-key=\"btn_del_hidden\"]').click();">
+            🗑️ 刪除暫存
+        </button>
+    </div>
+    """, unsafe_allow_html=True)
 
 # -------- 未完成訂單頁 --------
 with tabs[1]:
