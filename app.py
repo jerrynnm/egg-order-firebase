@@ -8,33 +8,28 @@ import hashlib
 from dateutil import parser
 
 # -------- CSS --------
+# -------- CSS 美化按鈕 --------
 st.markdown("""
-<style>
-.row-btns { display: flex; gap: 14px; justify-content: center; margin-bottom:10px;}
-.row-btns .stButton>button { 
-    font-size: 15px !important; 
-    padding: 6px 18px !important;
-    border-radius: 1.5em;
-}
-@media (max-width: 600px) {
-    .row-btns .stButton>button { font-size: 14px !important; padding: 7px 10px !important;}
-    .row-btns { gap: 8px; }
-}
-</style>
+    <style>
+    .stButton>button {
+        width: auto;
+        min-width: 120px;
+        margin: 5px;
+        border-radius: 20px;
+        padding: 8px 16px;
+        font-size: 16px;
+        font-weight: bold;
+        background-color: #444;
+        color: white;
+        border: 1px solid #888;
+    }
+    .stButton>button:hover {
+        background-color: #666;
+        color: #fff;
+    }
+    </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="row-btns">', unsafe_allow_html=True)
-col1, col2 = st.columns(2, gap="small")
-with col1:
-    send = st.button("🚀 送出")
-with col2:
-    delete = st.button("🗑️ 刪除暫存")
-st.markdown('</div>', unsafe_allow_html=True)
-
-if send:
-    st.success("已送出")
-if delete:
-    st.warning("已刪除")
 
 # -------- MENU 資料 --------
 MENU = {
