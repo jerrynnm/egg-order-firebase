@@ -9,21 +9,19 @@ from dateutil import parser
 
 # -------- CSS --------
 st.markdown("""
-    <style>
-    .center {text-align: center !important;}
-    .stButton>button {
-        width: 100%;         /* 讓按鈕填滿欄位 */
-        margin-top: 10px;
-    }
-    .stTabs [role="tablist"] {
-        justify-content: center;
-    }
-    .stTabs [role="tab"] {
-        font-weight: bold;
-        font-size: 18px;
-    }
-    </style>
+<style>
+/* 行動裝置自適應縮小字體、按鈕小一點 */
+html, body, .stApp { font-size: 16px !important; }
+@media (max-width: 600px) {
+  html, body, .stApp { font-size: 15px !important; }
+  .stButton>button { font-size: 15px !important; padding: 0.4em 0.8em !important;}
+}
+/* 讓按鈕水平排列且間距一致 */
+.row-btns { display: flex; gap: 16px; margin-top: 10px; justify-content: center; }
+.stButton>button { min-width: 80px; }
+</style>
 """, unsafe_allow_html=True)
+
 # -------- MENU 資料 --------
 MENU = {
     "特價綜合雞蛋糕": 70,
@@ -63,15 +61,6 @@ with tabs[0]:
         st.session_state.show_popup = True
         st.session_state.success_message = "✅ 訂單已送出！"
 
-    if st.session_state.get("success_message"):
-        st.success(st.session_state.success_message)
-        st.session_state.success_message = None
-
-    for item in MENU:
-        if st.button(item, key=f"menu_button_{item}"):
-            st.session_state.selected_item = item
-            st.session_state.show_popup = True
-
     if st.session_state.get('show_popup', False):
         item = st.session_state['selected_item']
         st.subheader(f"新增: {item}")
@@ -79,25 +68,33 @@ with tabs[0]:
         if item == "原味雞蛋糕":
             qty = st.number_input("份數", min_value=1, max_value=20, value=1, step=1, key="qty")
             note = st.text_input("輸入備註（可空白）", key="note_plain")
+            
+            st.markdown('<div class="row-btns">', unsafe_allow_html=True)
+            send = st.button("🚀 直接送出", key="send_plain")
+            confirm = st.button("✅ 確認新增", key="confirm_plain")
+            st.markdown('</div>', unsafe_allow_html=True)
 
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("直接送出", key="send_plain"):
-                    txt = f"{item} x{qty}"
-                    if note:
-                        txt += f" - 備註: {note}"
-                    st.session_state.temp_order.append({"text": txt, "price": MENU[item] * qty, "note": note})
-                    send_temp_order_directly()
+            if send:
+                txt = f"{item} x{qty}"
+                if note:
+                    txt += f" - 備註: {note}"
+                st.session_state.temp_order.append({"text": txt, "price": MENU[item] * qty, "note": note})
+                # 歸零操作
+                st.session_state['qty'] = 1
+                st.session_state['note_plain'] = ""
+                send_temp_order_directly()
 
-            with col2:
-                if st.button("確認新增", key="confirm_plain"):
-                    txt = f"{item} x{qty}"
-                    if note:
-                        txt += f" - 備註: {note}"
-                    st.session_state.temp_order.append({"text": txt, "price": MENU[item] * qty, "note": note})
-                    st.session_state.show_popup = False
+            if confirm:
+                txt = f"{item} x{qty}"
+                if note:
+                    txt += f" - 備註: {note}"
+                st.session_state.temp_order.append({"text": txt, "price": MENU[item] * qty, "note": note})
+                st.session_state['qty'] = 1
+                st.session_state['note_plain'] = ""
+                st.session_state.show_popup = False
 
         else:
+            # 內餡/特價綜合
             flavor_counts = {}
             current_values = {flavor: st.session_state.get(f"flavor_{flavor}", 0) for flavor in FLAVORS}
             total_selected = sum(current_values.values())
@@ -119,61 +116,66 @@ with tabs[0]:
                 )
 
             total_after = sum(flavor_counts.values())
-            st.markdown(f"\U0001F7A1 已選擇：**{total_after} 顆**（最多 3 顆）")
+            st.markdown(f"🟡 已選擇：<b>{total_after} 顆</b>（最多 3 顆）", unsafe_allow_html=True)
             note = st.text_input("輸入備註（可空白）", key="note_filled")
 
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("直接送出", key="send_filled"):
-                    if total_after != 3:
-                        st.warning("必須選滿3顆！")
-                    else:
-                        flavor_txt = ', '.join([f"{k}x{v}" for k, v in flavor_counts.items() if v > 0])
-                        if item == '特價綜合雞蛋糕':
-                            flavor_txt += ', 原味x3'
-                        txt = f"{item} {flavor_txt}"
-                        if note:
-                            txt += f" - 備註: {note}"
-                        st.session_state.temp_order.append({"text": txt, "price": MENU[item], "note": note})
-                        send_temp_order_directly()
+            st.markdown('<div class="row-btns">', unsafe_allow_html=True)
+            send_filled = st.button("🚀 直接送出", key="send_filled")
+            confirm_filled = st.button("✅ 確認新增", key="confirm_filled")
+            st.markdown('</div>', unsafe_allow_html=True)
 
-            with col2:
-                if st.button("確認新增", key="confirm_filled"):
-                    if total_after != 3:
-                        st.warning("必須選滿3顆！")
-                    else:
-                        flavor_txt = ', '.join([f"{k}x{v}" for k, v in flavor_counts.items() if v > 0])
-                        if item == '特價綜合雞蛋糕':
-                            flavor_txt += ', 原味x3'
-                        txt = f"{item} {flavor_txt}"
-                        if note:
-                            txt += f" - 備註: {note}"
-                        st.session_state.temp_order.append({"text": txt, "price": MENU[item], "note": note})
+            def reset_flavors():
+                for flavor in FLAVORS:
+                    st.session_state[f"flavor_{flavor}"] = 0
+                st.session_state["note_filled"] = ""
 
-                        for flavor in FLAVORS:
-                            st.session_state.pop(f"flavor_{flavor}", None)
+            if send_filled:
+                if total_after != 3:
+                    st.warning("必須選滿3顆！")
+                else:
+                    flavor_txt = ', '.join([f"{k}x{v}" for k, v in flavor_counts.items() if v > 0])
+                    if item == '特價綜合雞蛋糕':
+                        flavor_txt += ', 原味x3'
+                    txt = f"{item} {flavor_txt}"
+                    if note:
+                        txt += f" - 備註: {note}"
+                    st.session_state.temp_order.append({"text": txt, "price": MENU[item], "note": note})
+                    reset_flavors()
+                    send_temp_order_directly()
 
-                        st.session_state.show_popup = True
-                        st.rerun()
+            if confirm_filled:
+                if total_after != 3:
+                    st.warning("必須選滿3顆！")
+                else:
+                    flavor_txt = ', '.join([f"{k}x{v}" for k, v in flavor_counts.items() if v > 0])
+                    if item == '特價綜合雞蛋糕':
+                        flavor_txt += ', 原味x3'
+                    txt = f"{item} {flavor_txt}"
+                    if note:
+                        txt += f" - 備註: {note}"
+                    st.session_state.temp_order.append({"text": txt, "price": MENU[item], "note": note})
+                    reset_flavors()
+                    st.session_state.show_popup = False
 
+    # ---- 暫存訂單區 ----
     st.subheader("暫存訂單顯示區")
     for i, o in enumerate(st.session_state.temp_order):
         st.write(f"{i+1}. {o['text']} (${o['price']})")
 
-    col_del, col_send = st.columns([1, 1])
-    with col_del:
-        if st.button("送出", key="send_temp_order"):
-            if st.session_state.temp_order:
-                send_temp_order_directly()
-
-    with col_send:
-        if st.button("刪除暫存", key="delete_temp"):
-            if st.session_state.temp_order:
-                st.session_state.temp_order.pop()
-
+    st.markdown('<div class="row-btns">', unsafe_allow_html=True)
+    send_temp = st.button("🚀 送出", key="send_temp_order")
+    del_temp = st.button("🗑️ 刪除暫存", key="delete_temp")
     st.markdown('</div>', unsafe_allow_html=True)
 
+    if send_temp:
+        if st.session_state.temp_order:
+            send_temp_order_directly()
 
+    if del_temp:
+        if st.session_state.temp_order:
+            st.session_state.temp_order.pop()
+
+    st.markdown('</div>', unsafe_allow_html=True)
 # -------- 未完成訂單頁 --------
 with tabs[1]:
     st.title("未完成訂單")
