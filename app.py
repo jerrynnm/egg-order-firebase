@@ -8,54 +8,67 @@ import hashlib
 from dateutil import parser
 
 # -------- CSS 美化按鈕 --------
-# ✅ 最下方「送出 / 刪除暫存」按鈕區塊美化
-    st.subheader("暫存訂單顯示區")
-    for i, o in enumerate(st.session_state.temp_order):
-        st.write(f"{i+1}. {o['text']} (${o['price']})")
+import streamlit as st
 
-    col_del, col_send = st.columns([1, 1])
+# -------- CSS 美化兩顆按鈕 --------
+st.markdown("""
+<style>
+.order-btn-row {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    gap: 14px;
+}
+.order-btn {
+    background: #ff4b4b;
+    color: #fff;
+    border: none;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 8px 20px;
+    min-width: 100px;
+    box-shadow: 1px 2px 8px #ccc;
+    transition: background 0.2s;
+}
+.order-btn.delete {
+    background: #888;
+}
+@media (max-width: 600px) {
+    .order-btn-row {
+        gap: 10px;
+    }
+    .order-btn {
+        font-size: 12px;
+        padding: 6px 12px;
+        min-width: 80px;
+    }
+}
+</style>
+""", unsafe_allow_html=True)
 
-    with col_del:
-        st.markdown('''
-        <div style="display: flex; justify-content: center;">
-            <button onclick="document.getElementById('send_temp_order_btn').click();" style="
-                background-color:#ff4b4b;
-                border:none;
-                border-radius:25px;
-                color:white;
-                padding:8px 16px;
-                font-size:15px;
-                font-weight:bold;
-                margin:5px;">
-                🚀 送出
-            </button>
-        </div>
-        ''', unsafe_allow_html=True)
-        if st.button("", key="send_temp_order_btn"):
-            if st.session_state.temp_order:
-                send_temp_order_directly()
+# -------- 暫存訂單顯示區 --------
+st.subheader("暫存訂單顯示區")
+for i, o in enumerate(st.session_state.temp_order):
+    st.write(f"{i+1}. {o['text']} (${o['price']})")
 
-    with col_send:
-        st.markdown('''
-        <div style="display: flex; justify-content: center;">
-            <button onclick="document.getElementById('delete_temp_btn').click();" style="
-                background-color:#888;
-                border:none;
-                border-radius:25px;
-                color:white;
-                padding:8px 16px;
-                font-size:15px;
-                font-weight:bold;
-                margin:5px;">
-                🗑️ 刪除暫存
-            </button>
-        </div>
-        ''', unsafe_allow_html=True)
-        if st.button("", key="delete_temp_btn"):
-            if st.session_state.temp_order:
-                st.session_state.temp_order.pop()
+# -------- 兩顆美化按鈕（橫向） --------
+st.markdown('<div class="order-btn-row">', unsafe_allow_html=True)
+col1, col2 = st.columns(2, gap="small")
 
-    st.markdown('</div>', unsafe_allow_html=True)
+with col1:
+    send_click = st.button("🚀 送出", key="send_temp_order", help="送出全部暫存訂單", type="primary")
+with col2:
+    del_click = st.button("🗑️ 刪除暫存", key="delete_temp", help="刪除最後一筆暫存")
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+# -------- 按鈕行為 --------
+if send_click and st.session_state.temp_order:
+    send_temp_order_directly()
+if del_click and st.session_state.temp_order:
+    st.session_state.temp_order.pop()
 
 
 # -------- MENU 資料 --------
