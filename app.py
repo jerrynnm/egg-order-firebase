@@ -135,7 +135,7 @@ with tabs[0]:
             st.session_state.selected_item = item
             st.session_state.show_popup = True
 
-    # 2. 彈出「新增」視窗
+    # 2. 彈出「新增」視窗（原味 vs 內餡/綜合）
     if st.session_state.get("show_popup", False):
         item = st.session_state['selected_item']
         st.subheader(f"新增: {item}")
@@ -249,48 +249,16 @@ with tabs[0]:
 
     # 5. 真正顯示給使用者看的「紅色送出／灰色刪除暫存」按鈕 (內聯 CSS，強制不換行)
     st.markdown("""
-    <div style="
-        display: flex;
-        flex-wrap: nowrap;
-        justify-content: center;
-        align-items: center;
-        gap: 10px;
-        margin-top: 8px;
-        margin-bottom: 8px;
-    ">
+    <div class="order-btn-row">
       <!-- 紅色「送出」按鈕 -->
       <button onclick="document.querySelector('[data-baseweb=\\"button\\"][data-key=\\"btn_send_hidden\\"]').click();" 
-              style="
-                background-color: #ff4b4b;
-                color: white;
-                border: none;
-                border-radius: 20px;
-                font-size: 12px;
-                font-weight: bold;
-                padding: 6px 16px;
-                min-width: 80px;
-                box-shadow: 1px 2px 6px rgba(0,0,0,0.2);
-                cursor: pointer;
-                transition: opacity 0.2s ease-in-out;
-              ">
+              class="order-btn">
         🚀 送出
       </button>
 
       <!-- 灰色「刪除暫存」按鈕 -->
       <button onclick="document.querySelector('[data-baseweb=\\"button\\"][data-key=\\"btn_del_hidden\\"]').click();" 
-              style="
-                background-color: #888888;
-                color: white;
-                border: none;
-                border-radius: 20px;
-                font-size: 12px;
-                font-weight: bold;
-                padding: 6px 16px;
-                min-width: 80px;
-                box-shadow: 1px 2px 6px rgba(0,0,0,0.2);
-                cursor: pointer;
-                transition: opacity 0.2s ease-in-out;
-              ">
+              class="order-btn delete">
         🗑️ 刪除暫存
       </button>
     </div>
@@ -300,12 +268,16 @@ with tabs[0]:
     st.markdown("""
     <style>
     @media (min-width: 600px) {
-      div[style*="flex-wrap: nowrap"] > button {
+      .order-btn {
         font-size: 14px !important;
         padding: 8px 20px !important;
         border-radius: 25px !important;
         min-width: 100px !important;
         box-shadow: 1px 2px 8px rgba(0,0,0,0.2) !important;
+      }
+      .order-btn-row {
+        gap: 14px;
+        margin: 12px 0;
       }
     }
     </style>
